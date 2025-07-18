@@ -14,7 +14,6 @@ import { SlGraph } from "react-icons/sl";
 import { MdOutlineExpandLess, MdOutlineExpandMore } from "react-icons/md";
 import ChangeStatBar from "../components/ChangeStatBar";
 import { getTimeStringRelative } from "../utils/utils";
-import Navbar from "../components/Navbar";
 import PageContainer from "../components/PageContainer";
 
 const AUTHORS: ChangeAuthor[] = [
@@ -127,7 +126,7 @@ export function generateFakeRepoHistory(count: number): RepoModification[] {
 export default function History() {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [hoverId, setHoverId] = useState<string | undefined>(undefined);
-  const [modifications, setModifications] = useState<RepoModification[]>(
+  const [modifications, _] = useState<RepoModification[]>(
     generateFakeRepoHistory(20)
   );
   const navigate = useNavigate();

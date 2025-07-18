@@ -183,7 +183,7 @@ export default function RooflinePlot({
             },
           },
         },
-        onClick: (event, elements) => {
+        onClick: (_, elements) => {
           if (elements.length > 0) {
             const datasetIndex = elements[0].datasetIndex;
             const index = elements[0].index;

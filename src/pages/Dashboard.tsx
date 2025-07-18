@@ -3,9 +3,8 @@ import { BarComparisonPlot } from "../components/BarPlot";
 import FilterControls from "../components/FilterControls";
 import { useEffect, useMemo, useState } from "react";
 import type { Kernel, KernelType } from "../types";
-import { fetchData, loadResultCsv } from "../utils/csv";
+import { fetchData } from "../utils/csv";
 import KernelView from "../components/KernelView";
-import Navbar from "../components/Navbar";
 import PageContainer from "../components/PageContainer";
 import { KERNEL_DIMS } from "../utils/utils";
 

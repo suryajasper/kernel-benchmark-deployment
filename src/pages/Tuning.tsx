@@ -31,7 +31,6 @@ function ItemTag({ color, colorHash, label }: ItemTagProps) {
 
 export default function Tuning() {
   const [kernels, setKernels] = useState<Kernel[]>([]);
-  const [query, setQuery] = useState<string>("");
 
   useEffect(() => {
     fetchData().then(setKernels);

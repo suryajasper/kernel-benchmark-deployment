@@ -1,4 +1,3 @@
-import { twMerge } from "tailwind-merge";
 import type { Kernel, KernelType } from "../types";
 import { getBackendColor } from "../utils/color";
 import { KERNEL_DIMS } from "../utils/utils";
