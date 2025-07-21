@@ -75,19 +75,16 @@ export async function loadResultCsv(
 }
 
 export async function fetchData() {
+  const baseUrl = "/kernel-benchmark-deployment"
+
   const dataConfigs = [
-    ["IREE MHA", "attention", "/results/attention/attention_iree.csv"],
-    ["Wave MHA", "attention", "/results/attention/attention_wave.csv"],
-    ["Wave GQA", "attention", "/results/attention/attention_wavegqa.csv"],
-    // [
-    //   "Wave GQA New",
-    //   "attention",
-    //   "/results/attention/attention_wavegqanew.csv",
-    // ],
-    ["IREE", "conv", "/results/conv/conv_iree.csv"],
-    ["Wave", "conv", "/results/conv/conv_wave.csv"],
-    ["IREE", "gemm", "/results/gemm/gemm_iree.csv"],
-    ["Wave", "gemm", "/results/gemm/gemm_wave.csv"],
+    ["IREE MHA", "attention", `${baseUrl}/results/attention/attention_iree.csv`],
+    ["Wave MHA", "attention", `${baseUrl}/results/attention/attention_wave.csv`],
+    ["Wave GQA", "attention", `${baseUrl}/results/attention/attention_wavegqa.csv`],
+    ["IREE", "conv", `${baseUrl}/results/conv/conv_iree.csv`],
+    ["Wave", "conv", `${baseUrl}/results/conv/conv_wave.csv`],
+    ["IREE", "gemm", `${baseUrl}/results/gemm/gemm_iree.csv`],
+    ["Wave", "gemm", `${baseUrl}/results/gemm/gemm_wave.csv`],
   ];
   const kernelRequests = dataConfigs.map(
     async ([backend, kernelType, csvPath]) =>

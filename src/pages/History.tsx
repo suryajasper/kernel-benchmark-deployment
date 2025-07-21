@@ -176,7 +176,7 @@ export default function History() {
                   onMouseEnter={() => setHoverId(base._id)}
                   onMouseLeave={() => setHoverId(undefined)}
                   onClick={() =>
-                    navigate("/dashboard", { preventScrollReset: true })
+                    navigate("/kernel-benchmark-deployment/dashboard", { preventScrollReset: true })
                   }
                 >
                   <div className="flex justify-between items-start gap-4">
@@ -267,7 +267,7 @@ export default function History() {
                         </div>
                       )}
                       <Link
-                        to="/dashboard"
+                        to="/kernel-benchmark-deployment/dashboard"
                         className="rounded-full hover:bg-gray-200"
                         title="View Dashboard Summary"
                       >

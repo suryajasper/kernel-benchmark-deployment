@@ -1,5 +1,6 @@
 import React, { type JSX } from "react";
 import { FaHome, FaHistory, FaPlus, FaGuitar } from "react-icons/fa";
+import { Link } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 
 export type PageName = "dashboard" | "history" | "new" | "tune";
@@ -24,8 +25,8 @@ const Navbar: React.FC<NavbarProps> = ({ activePage }) => {
       <ul className="flex space-x-6">
         {navItems.map((item) => (
           <li key={item.name}>
-            <a
-              href={`/${item.name}`}
+            <Link
+              to={`/kernel-benchmark-deployment/${item.name}`}
               className={twMerge(
                 "flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors",
                 activePage === item.name ? "font-semibold text-blue-600" : ""
@@ -33,7 +34,7 @@ const Navbar: React.FC<NavbarProps> = ({ activePage }) => {
             >
               {item.icon}
               <span>{item.label}</span>
-            </a>
+            </Link>
           </li>
         ))}
       </ul>
