@@ -25,6 +25,7 @@ export type ChangeStats = Record<KernelType, number>;
 
 export interface RepoModification {
   _id: string;
+  url: string;
   type: "pr" | "merge";
   timestamp: Date;
   author: ChangeAuthor;

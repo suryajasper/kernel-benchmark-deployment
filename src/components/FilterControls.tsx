@@ -16,7 +16,7 @@ interface MultiSelectProps extends SelectProps {
   onInput: (selectedOptions: string[]) => void;
 }
 
-function SingleSelectFilter({
+export function SingleSelectFilter({
   title,
   options,
   selectedOption,
@@ -38,7 +38,7 @@ function SingleSelectFilter({
   );
 }
 
-function MultiSelectFilter({
+export function MultiSelectFilter({
   title,
   options,
   selectedOptions,
