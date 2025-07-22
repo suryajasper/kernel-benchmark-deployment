@@ -22,29 +22,11 @@ export async function fetchPullRequests() {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    const data = await response.json();
-
-    const pullRequests: RepoPullRequest[] = data.map((prData: any) => {
-      const author: ChangeAuthor = {
-        name: prData["user"]["name"] || prData["user"]["login"],
-        profileUrl: prData["user"]["avatar_url"],
-      };
-
-      const pr: RepoPullRequest = {
-        type: "pr",
-        url: prData["html_url"],
-        changeStats: randomStats(),
-        _id: prData["id"].toString(),
-        timestamp: new Date(prData["updated_at"]),
-        author,
-        title: prData["title"],
-        description: prData["body"],
-        status: prData["state"],
-        commits: [],
-      };
-
-      return pr;
-    });
+    let data = await response.json();
+    for (let obj of data)
+      obj['timestamp'] = new Date(obj['timestamp']);
+    
+    const pullRequests = data as RepoPullRequest[];
 
     pullRequests.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
