@@ -74,22 +74,29 @@ export async function loadResultCsv(
   });
 }
 
-export async function fetchData() {
-  const baseUrl = "/kernel-benchmark-deployment"
+// export async function fetchData() {
+//   const baseUrl = "/kernel-benchmark-deployment"
 
-  const dataConfigs = [
-    ["IREE MHA", "attention", `${baseUrl}/results/attention/attention_iree.csv`],
-    ["Wave MHA", "attention", `${baseUrl}/results/attention/attention_wave.csv`],
-    ["Wave GQA", "attention", `${baseUrl}/results/attention/attention_wavegqa.csv`],
-    ["IREE", "conv", `${baseUrl}/results/conv/conv_iree.csv`],
-    ["Wave", "conv", `${baseUrl}/results/conv/conv_wave.csv`],
-    ["IREE", "gemm", `${baseUrl}/results/gemm/gemm_iree.csv`],
-    ["Wave", "gemm", `${baseUrl}/results/gemm/gemm_wave.csv`],
-  ];
-  const kernelRequests = dataConfigs.map(
-    async ([backend, kernelType, csvPath]) =>
-      await loadResultCsv(backend, kernelType as KernelType, csvPath)
-  );
-  const kernels = (await Promise.all(kernelRequests)).flat();
+//   const dataConfigs = [
+//     ["IREE MHA", "attention", `${baseUrl}/results/attention/attention_iree.csv`],
+//     ["Wave MHA", "attention", `${baseUrl}/results/attention/attention_wave.csv`],
+//     ["Wave GQA", "attention", `${baseUrl}/results/attention/attention_wavegqa.csv`],
+//     ["IREE", "conv", `${baseUrl}/results/conv/conv_iree.csv`],
+//     ["Wave", "conv", `${baseUrl}/results/conv/conv_wave.csv`],
+//     ["IREE", "gemm", `${baseUrl}/results/gemm/gemm_iree.csv`],
+//     ["Wave", "gemm", `${baseUrl}/results/gemm/gemm_wave.csv`],
+//   ];
+//   const kernelRequests = dataConfigs.map(
+//     async ([backend, kernelType, csvPath]) =>
+//       await loadResultCsv(backend, kernelType as KernelType, csvPath)
+//   );
+//   const kernels = (await Promise.all(kernelRequests)).flat();
+//   return kernels;
+// }
+
+export async function fetchData() {
+  const response = await fetch("http://localhost:3000/artifact");
+  const kernels = (await response.json()) as Kernel[];
+  console.log(kernels);
   return kernels;
 }

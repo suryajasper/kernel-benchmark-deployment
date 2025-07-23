@@ -96,11 +96,11 @@ export default function Tuning() {
   };
 
   return (
-    <PageContainer activePage="tune">
+    <PageContainer activePage="tune" isLoading={kernels.length === 0}>
       <div className="w-[100%] flex flex-col rounded-md">
         <div className="w-[100%] pb-5 pl-10 flex flex-row justify-between">
           <input
-            className="border-none outline-none"
+            className="border-none flex-grow outline-none"
             value={query}
             placeholder="Enter Search Query"
             onInput={(e) => setQuery(e.currentTarget.value)}
@@ -125,12 +125,16 @@ export default function Tuning() {
       </div>
       <div className="flex flex-col w-[100%] gap-1 px-4">
         {filteredKernels.map((k) => (
-          <div className="flex flex-row justify-between w-[100%] bg-gray-100 border border-gray-500 rounded-md py-1 px-4">
+          <div
+            className="cursor-pointer flex flex-row justify-between w-[100%] bg-gray-100 border border-gray-500 rounded-md py-1 px-4"
+            onClick={() => toggleTuningKernel(k.id)}
+          >
             <div className="flex flex-row gap-4">
               <input
                 type="checkbox"
                 checked={tuningKernels.has(k.id)}
                 onInput={() => toggleTuningKernel(k.id)}
+                onClick={(e) => e.stopPropagation()}
               />
               <ItemTag label={toTitleCase(k.kernelType)} />
               <ItemTag label={k.backend} />

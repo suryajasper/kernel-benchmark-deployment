@@ -3,6 +3,8 @@ import type {
   ChangeAuthor,
   ChangeStats,
   KernelType,
+  RepoModification,
+  RepoMerge,
 } from "../types";
 
 const KERNEL_TYPES = ["gemm", "attention", "convolution"] as const;
@@ -15,22 +17,25 @@ function randomStats(): ChangeStats {
   return stats;
 }
 
-export async function fetchPullRequests() {
+export async function fetchModifications() {
   try {
     const response = await fetch("http://localhost:3000/pull_requests");
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    let data = await response.json();
-    for (let obj of data)
-      obj['timestamp'] = new Date(obj['timestamp']);
-    
-    const pullRequests = data as RepoPullRequest[];
+    const data = await response.json();
+    const modifications: RepoModification[] = [];
 
-    pullRequests.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    for (let obj of data) {
+      obj["timestamp"] = new Date(obj["timestamp"]);
+      if (obj["type"] === "pr") modifications.push(obj as RepoPullRequest);
+      else if (obj["type"] === "merge") modifications.push(obj as RepoMerge);
+    }
 
-    return pullRequests;
+    modifications.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+    return modifications;
   } catch (error) {
     throw new Error(`Failed to fetch pull requests: ${error}`);
   }

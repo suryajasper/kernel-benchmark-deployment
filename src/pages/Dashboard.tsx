@@ -7,6 +7,7 @@ import { fetchData } from "../utils/csv";
 import KernelView from "../components/KernelView";
 import PageContainer from "../components/PageContainer";
 import { KERNEL_DIMS } from "../utils/utils";
+import { ClockLoader } from "react-spinners";
 
 export default function Dashboard() {
   const [kernels, setKernels] = useState<Kernel[]>([]);
@@ -41,7 +42,8 @@ export default function Dashboard() {
   }, [kernels, kernelType, selectedBackends, selectedDtypes, selectedTags]);
 
   const filteredWaveKernels = useMemo(
-    () => filteredKernels.filter((k) => k.backend.toLowerCase().startsWith("wave")),
+    () =>
+      filteredKernels.filter((k) => k.backend.toLowerCase().startsWith("wave")),
     [filteredKernels]
   );
 
@@ -54,6 +56,7 @@ export default function Dashboard() {
     if (!selectedKernel) return [];
     return kernels.filter((k) => {
       if (k.kernelType !== selectedKernel.kernelType) return false;
+      if (k.dtype !== selectedKernel.dtype) return false;
       return KERNEL_DIMS[k.kernelType].every(
         (dimName) => k.shape[dimName] === selectedKernel.shape[dimName]
       );
@@ -61,7 +64,7 @@ export default function Dashboard() {
   }, [kernels, selectedKernel]);
 
   return (
-    <PageContainer activePage="dashboard">
+    <PageContainer activePage="dashboard" isLoading={kernels.length === 0}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <FilterControls
           kernels={kernels}
