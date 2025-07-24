@@ -1,22 +1,25 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import type { RepoPullRequest, RepoMerge, RepoModification } from "../types";
+import type {
+  RepoPullRequest,
+  RepoMerge,
+  RepoModification,
+  BenchmarkRun,
+} from "../types";
 import { FaCodePullRequest, FaCodeMerge, FaGithub } from "react-icons/fa6";
 import { SlGraph } from "react-icons/sl";
 import { MdOutlineExpandLess, MdOutlineExpandMore } from "react-icons/md";
-import ChangeStatBar from "../components/ChangeStatBar";
 import { getTimeStringRelative } from "../utils/utils";
 import PageContainer from "../components/PageContainer";
-import { fetchModifications } from "../utils/github";
+import { fetchModifications, fetchRuns } from "../utils/github";
+import RunStatus from "../components/RunStatus";
 // import { generateFakeRepoHistory } from "../utils/history";
-import { ClockLoader } from "react-spinners";
 
 export default function History() {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [hoverId, setHoverId] = useState<string | undefined>(undefined);
-  const [modifications, setModifications] = useState<RepoModification[]>(
-    [] // generateFakeRepoHistory(20)
-  );
+  const [modifications, setModifications] = useState<RepoModification[]>([]);
+  const [runs, setRuns] = useState<Record<string, BenchmarkRun>>({});
   const navigate = useNavigate();
 
   const toggleExpand = (id: string) => {
@@ -37,6 +40,9 @@ export default function History() {
 
   useEffect(() => {
     fetchModifications().then(setModifications);
+    fetchRuns().then((runArr) => {
+      for (let run of runArr) runs[run.headSha] = run;
+    });
   }, []);
 
   return (
@@ -112,17 +118,7 @@ export default function History() {
                     </div>
 
                     {/* Change Stats */}
-                    <div className="flex flex-col gap-2 ml-auto">
-                      {Object.entries(base.changeStats).map(
-                        ([kernelType, change]) => (
-                          <ChangeStatBar
-                            key={kernelType}
-                            kernelType={kernelType}
-                            change={change}
-                          />
-                        )
-                      )}
-                    </div>
+                    <RunStatus run={runs[base.headSha]} />
                   </div>
 
                   {/* Expandable PR Description */}

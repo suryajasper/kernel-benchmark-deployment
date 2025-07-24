@@ -5,6 +5,7 @@ import type {
   KernelType,
   RepoModification,
   RepoMerge,
+  BenchmarkRun,
 } from "../types";
 
 const KERNEL_TYPES = ["gemm", "attention", "convolution"] as const;
@@ -38,5 +39,19 @@ export async function fetchModifications() {
     return modifications;
   } catch (error) {
     throw new Error(`Failed to fetch pull requests: ${error}`);
+  }
+}
+
+export async function fetchRuns() {
+  try {
+    const response = await fetch("http://localhost:3000/runs");
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const jobs: BenchmarkRun[] = await response.json();
+    return jobs;
+  } catch (error) {
+    throw new Error(`Failed to fetch runs: ${error}`);
   }
 }
