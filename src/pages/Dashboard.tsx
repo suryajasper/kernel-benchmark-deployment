@@ -6,7 +6,7 @@ import type { Kernel, KernelType } from "../types";
 import { fetchData } from "../utils/csv";
 import KernelView from "../components/KernelView";
 import PageContainer from "../components/PageContainer";
-import { KERNEL_DIMS } from "../utils/utils";
+import { getCommonKernels, KERNEL_DIMS } from "../utils/utils";
 import { ClockLoader } from "react-spinners";
 
 export default function Dashboard() {
@@ -63,6 +63,8 @@ export default function Dashboard() {
     });
   }, [kernels, selectedKernel]);
 
+  const commonKernels = useMemo(() => getCommonKernels(filteredKernels), [filteredKernels]);
+
   return (
     <PageContainer activePage="dashboard" isLoading={kernels.length === 0}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -82,7 +84,7 @@ export default function Dashboard() {
         <div className="w-full lg:w-[60%] flex flex-col items-center">
           <h2 className="text-xl mb-4 font-bold">Roofline Plot</h2>
           <RooflinePlot
-            kernels={filteredKernels}
+            kernels={commonKernels}
             setSelected={setSelectedKernelId}
             selectedKernel={selectedKernel}
           />
@@ -93,7 +95,7 @@ export default function Dashboard() {
             {selectedKernel ? `: ${selectedKernel.name}` : " (microseconds)"}
           </h2>
           <BarComparisonPlot
-            kernels={selectedKernelId ? sameShapeKernels : filteredKernels}
+            kernels={selectedKernelId ? sameShapeKernels : commonKernels}
           />
           {!selectedKernel && filteredWaveKernels.length > 0 && (
             <button className="px-4 mt-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">

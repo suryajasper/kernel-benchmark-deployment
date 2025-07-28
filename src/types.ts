@@ -13,6 +13,7 @@ export interface Kernel {
   arithmeticIntensity: number;
   tflops: number;
   shape: Record<string, any>;
+  ok: string;
 }
 
 /* Source Control */

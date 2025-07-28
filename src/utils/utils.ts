@@ -1,4 +1,4 @@
-import type { KernelType } from "../types";
+import type { Kernel, KernelType } from "../types";
 
 export function toTitleCase(str: string): string {
   return str.replace(
@@ -41,4 +41,36 @@ export function getTimeStringRelative(time: Date) {
   }
 
   return time.toLocaleDateString();
+}
+
+export function hashKernel(kernel: Kernel): string {
+  return (
+    `${kernel.kernelType}_` +
+    KERNEL_DIMS[kernel.kernelType]
+      .filter((dimName) => dimName !== "dtype")
+      .map((dimName) => `${dimName}${kernel.shape[dimName]}`)
+      .join("_")
+      .concat(`_${kernel.dtype}`)
+  );
+}
+
+export function getCommonKernels(kernels: Kernel[]): Kernel[] {
+  const backendShapes: Record<string, Set<string>> = {};
+  for (const kernel of kernels) {
+    const kernelHash = hashKernel(kernel);
+    if (!backendShapes[kernel.backend])
+      backendShapes[kernel.backend] = new Set<string>();
+    backendShapes[kernel.backend].add(kernelHash);
+  }
+
+  const commonShapes =
+    kernels.length > 0
+      ? Object.values(backendShapes).reduce(
+          (prev, curr) => new Set([...prev].filter((hash) => curr.has(hash)))
+        )
+      : new Set<string>();
+
+  console.log("fuck", commonShapes);
+
+  return kernels.filter((k) => commonShapes.has(hashKernel(k)));
 }

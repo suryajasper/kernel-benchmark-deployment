@@ -58,7 +58,14 @@ function getStepColor(step?: BenchmarkJobStep): string {
   const { status, conclusion } = step;
 
   if (status === "completed") {
-    return conclusion === "success" ? "bg-green-500" : "bg-red-500";
+    if (conclusion === "success")
+      return "bg-green-500";
+    else if (conclusion === "skipped")
+      return "bg-green-300";
+    else if (conclusion === "cancelled")
+      return "bg-gray-600";
+    else
+      return "bg-red-500";
   } else if (status === "in_progress") {
     return "bg-yellow-400";
   } else {
@@ -82,7 +89,7 @@ export function JobProgressBar({ numSteps, steps }: JobProgressBarProps) {
     return (
       <div
         key={i}
-        className={`flex-1 h-6 ${colorClass} ${roundedClass} ${borderClass}`}
+        className={`flex-1 h-2 ${colorClass} ${roundedClass} ${borderClass}`}
       />
     );
   });
@@ -95,7 +102,11 @@ export function JobProgressBar({ numSteps, steps }: JobProgressBarProps) {
 
   let title = "Waiting for Job";
   if (steps.length > 0) {
-    const activeStep = steps[steps.length - 1];
+    let activeStep : BenchmarkJobStep = steps[0];
+    for (activeStep of steps)
+      if (!activeStep.started_at || !activeStep.completed_at)
+        break;
+
     title = `${toTitleCase(activeStep.name)}: `;
     if (activeStep.status === "completed")
       title += formatStatus(activeStep.conclusion);

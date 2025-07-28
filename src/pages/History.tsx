@@ -40,9 +40,32 @@ export default function History() {
 
   useEffect(() => {
     fetchModifications().then(setModifications);
-    fetchRuns().then((runArr) => {
-      for (let run of runArr) runs[run.headSha] = run;
-    });
+
+    const updateRuns = () => {
+      fetchRuns().then((runArr) => {
+        const newRuns: Record<string, BenchmarkRun> = {};
+        for (let run of runArr) {
+          const existingRun = newRuns[run.headSha];
+          if (!existingRun || run.timestamp > existingRun.timestamp) {
+            newRuns[run.headSha] = run;
+          }
+        }
+        console.log(newRuns);
+        setRuns(newRuns);
+      });
+    }
+    updateRuns();
+
+    const modInterval = setInterval(() => {
+      fetchModifications().then(setModifications);
+    }, 30 * 1000);
+
+    const runInterval = setInterval(updateRuns, 10 * 1000);
+
+    return () => {
+      clearInterval(modInterval);
+      clearInterval(runInterval);
+    };
   }, []);
 
   return (
@@ -85,7 +108,7 @@ export default function History() {
                       {isMerge ? (
                         <FaCodeMerge className="text-green-700 text-xl" />
                       ) : (
-                        <FaCodePullRequest className="text-gray-700 text-xl" />
+                        <FaCodePullRequest className={`text-${(base as RepoPullRequest).status === 'open' ? "green" : "pink"}-700 text-xl`} />
                       )}
                     </div>
 
@@ -118,7 +141,7 @@ export default function History() {
                     </div>
 
                     {/* Change Stats */}
-                    <RunStatus run={runs[base.headSha]} />
+                    {isPR ? <RunStatus run={runs[base.headSha]} /> : <div className="ml-auto"></div>}
                   </div>
 
                   {/* Expandable PR Description */}
