@@ -40,7 +40,7 @@ export default function Tuning() {
   const [tuningKernels, setTuningKernels] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    fetchData().then(setKernels);
+    fetchData("baseline").then(setKernels);
   }, []);
 
   useEffect(() => {
@@ -80,10 +80,6 @@ export default function Tuning() {
     selectedTags,
     query,
   ]);
-
-  useEffect(() => {
-    fetchData().then(setKernels);
-  }, []);
 
   const toggleTuningKernel = (kernelId: string) => {
     setTuningKernels((oldTk) => {

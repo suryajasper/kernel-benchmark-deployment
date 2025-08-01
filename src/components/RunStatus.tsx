@@ -1,26 +1,33 @@
 import { twMerge } from "tailwind-merge";
-import type { BenchmarkJobStep, BenchmarkRun } from "../types";
+import type { BenchmarkJobStep, BenchmarkRun, RepoPullRequest } from "../types";
 import { toTitleCase } from "../utils/utils";
 import ChangeStatBar from "./ChangeStatBar";
 import { BarLoader } from "react-spinners";
+import { useState } from "react";
+import { cancelWorkflow, triggerWorkflow } from "../utils/github";
 
 interface RunStatusContainerProps {
   children: React.ReactNode;
   fill?: boolean;
   run?: BenchmarkRun;
+  actions?: Record<string, (runId: string) => void>;
 }
 
-function RunStatusContainer({ children, fill, run }: RunStatusContainerProps) {
+function RunStatusContainer({
+  children,
+  fill,
+  run,
+  actions = {},
+}: RunStatusContainerProps) {
+  const [hovered, setHovered] = useState(false);
+  const hasActions = Object.keys(actions).length > 0;
+
   if (fill) {
     let backgroundTint = "gray";
 
     if (run) {
       if (run.status === "completed") {
-        if (run.conclusion === "success") {
-          backgroundTint = "green";
-        } else {
-          backgroundTint = "red";
-        }
+        backgroundTint = run.conclusion === "success" ? "green" : "red";
       } else if (run.status === "in_progress") {
         backgroundTint = "yellow";
       }
@@ -28,23 +35,48 @@ function RunStatusContainer({ children, fill, run }: RunStatusContainerProps) {
 
     return (
       <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         className={twMerge(
-          `bg-${backgroundTint}-400/35`,
+          `relative bg-${backgroundTint}-400/35`,
           "h-25 w-80 ml-auto rounded-md border-2 border-gray-400 border-dashed"
         )}
       >
         <div className="w-full h-full flex flex-col gap-2 py-2 px-6 items-center justify-center">
           {children}
         </div>
-      </div>
-    );
-  } else {
-    return (
-      <div className="h-25 w-80 flex flex-col justify-center items-center gap-2 ml-auto">
-        {children}
+
+        {hasActions && hovered && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="absolute top-0 left-0 w-full h-full bg-black/50 flex justify-center items-center gap-4 rounded-md z-10"
+          >
+            {Object.entries(actions).map(([label, callback]) => (
+              <button
+                key={label}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (run) {
+                    callback(run._id);
+                  }
+                }}
+                className="bg-white text-black px-4 py-1 rounded shadow hover:bg-gray-100"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
+
+  return (
+    <div className="h-25 w-80 flex flex-col justify-center items-center gap-2 ml-auto">
+      {children}
+    </div>
+  );
 }
 
 interface JobProgressBarProps {
@@ -58,14 +90,10 @@ function getStepColor(step?: BenchmarkJobStep): string {
   const { status, conclusion } = step;
 
   if (status === "completed") {
-    if (conclusion === "success")
-      return "bg-green-500";
-    else if (conclusion === "skipped")
-      return "bg-green-300";
-    else if (conclusion === "cancelled")
-      return "bg-gray-600";
-    else
-      return "bg-red-500";
+    if (conclusion === "success") return "bg-green-500";
+    else if (conclusion === "skipped") return "bg-green-300";
+    else if (conclusion === "cancelled") return "bg-gray-600";
+    else return "bg-red-500";
   } else if (status === "in_progress") {
     return "bg-yellow-400";
   } else {
@@ -102,10 +130,9 @@ export function JobProgressBar({ numSteps, steps }: JobProgressBarProps) {
 
   let title = "Waiting for Job";
   if (steps.length > 0) {
-    let activeStep : BenchmarkJobStep = steps[0];
+    let activeStep: BenchmarkJobStep = steps[0];
     for (activeStep of steps)
-      if (!activeStep.started_at || !activeStep.completed_at)
-        break;
+      if (!activeStep.started_at || !activeStep.completed_at) break;
 
     title = `${toTitleCase(activeStep.name)}: `;
     if (activeStep.status === "completed")
@@ -123,20 +150,37 @@ export function JobProgressBar({ numSteps, steps }: JobProgressBarProps) {
 
 interface RunStatusProps {
   run?: BenchmarkRun;
+  pr: RepoPullRequest;
 }
 
-export default function RunStatus({ run }: RunStatusProps) {
-  if (!run)
+export default function RunStatus({ run, pr }: RunStatusProps) {
+  const [workflowWaiting, setWorkflowWaiting] = useState<boolean>(false);
+
+  const dispatchWorkflow = async () => {
+    try {
+      setWorkflowWaiting(true);
+      await triggerWorkflow(pr);
+    } finally {
+      setWorkflowWaiting(false);
+    }
+  };
+
+  if (!run || (run.status === "completed" && run.conclusion !== "success")) {
     return (
       <RunStatusContainer run={run}>
         <button
-          className="px-4 py-2 w-40 bg-blue-600 text-white rounded hover:bg-blue-700"
-          onClick={(e) => e.stopPropagation()}
+          disabled={workflowWaiting}
+          className="bg-blue-100 text-black px-4 py-1 rounded shadow hover:not-[disabled]:bg-blue-200 disabled:bg-gray-300"
+          onClick={(e) => {
+            dispatchWorkflow();
+            e.stopPropagation();
+          }}
         >
-          Trigger CI Run
+          {workflowWaiting ? "Run Requested" : "Trigger CI Run"}
         </button>
       </RunStatusContainer>
     );
+  }
 
   if (Object.keys(run.changeStats).length > 0)
     return (
@@ -153,14 +197,14 @@ export default function RunStatus({ run }: RunStatusProps) {
 
   if (["queued", "requested", "pending", "waiting"].includes(run.status))
     return (
-      <RunStatusContainer run={run} fill>
+      <RunStatusContainer run={run} fill actions={{ Cancel: cancelWorkflow }}>
         Run {toTitleCase(run.status)}
         <BarLoader />
       </RunStatusContainer>
     );
   else {
     return (
-      <RunStatusContainer run={run} fill>
+      <RunStatusContainer run={run} fill actions={{ Cancel: cancelWorkflow }}>
         <JobProgressBar numSteps={run.numSteps} steps={run.steps} />
       </RunStatusContainer>
     );

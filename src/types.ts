@@ -46,6 +46,8 @@ export interface RepoPullRequest extends RepoModification {
   title: string;
   description?: string;
   status: "open" | "closed";
+  repoName: string;
+  branchName: string;
   commits: RepoCommit[];
 }
 

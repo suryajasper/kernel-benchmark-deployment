@@ -7,7 +7,7 @@ import { fetchData } from "../utils/csv";
 import KernelView from "../components/KernelView";
 import PageContainer from "../components/PageContainer";
 import { getCommonKernels, KERNEL_DIMS } from "../utils/utils";
-import { ClockLoader } from "react-spinners";
+import { useParams } from "react-router-dom";
 
 export default function Dashboard() {
   const [kernels, setKernels] = useState<Kernel[]>([]);
@@ -17,9 +17,11 @@ export default function Dashboard() {
   const [selectedDtypes, setSelectedDtypes] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
+  const { runId } = useParams();
+
   useEffect(() => {
-    fetchData().then(setKernels);
-  }, []);
+    if (runId) fetchData(runId).then(setKernels);
+  }, [runId]);
 
   useEffect(() => {
     const uniqueBackends = Array.from(new Set(kernels.map((k) => k.backend)));
@@ -63,7 +65,10 @@ export default function Dashboard() {
     });
   }, [kernels, selectedKernel]);
 
-  const commonKernels = useMemo(() => getCommonKernels(filteredKernels), [filteredKernels]);
+  const commonKernels = useMemo(
+    () => getCommonKernels(filteredKernels),
+    [filteredKernels]
+  );
 
   return (
     <PageContainer activePage="dashboard" isLoading={kernels.length === 0}>

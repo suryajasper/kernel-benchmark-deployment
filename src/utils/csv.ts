@@ -94,13 +94,16 @@ import type { Kernel, KernelType } from "../types";
 //   return kernels;
 // }
 
-export async function fetchData() {
-  const response = await fetch("http://localhost:3000/artifact");
+export async function fetchData(runId: string) {
+  const response = await fetch(`http://localhost:3000/artifact/${runId}`);
   const kernels = (await response.json()) as Kernel[];
-  
+
   for (let kernel of kernels) {
-    if (kernel.backend === 'torch' && kernel.name === 'attention_bmnk1k2_1x4096x64x64x4096xf16') {
-      console.log('shit', kernel)
+    if (
+      kernel.backend === "torch" &&
+      kernel.name === "attention_bmnk1k2_1x4096x64x64x4096xf16"
+    ) {
+      console.log("shit", kernel);
     }
   }
 

@@ -55,3 +55,43 @@ export async function fetchRuns() {
     throw new Error(`Failed to fetch runs: ${error}`);
   }
 }
+
+export async function rebase() {
+  try {
+    const response = await fetch("http://localhost:3000/pull_requests/rebase", {
+      method: "POST",
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+  } catch (error) {
+    console.log(`Failed to rebase: ${error}`);
+  }
+}
+
+export async function triggerWorkflow(pullRequest: RepoPullRequest) {
+  const response = await fetch("http://localhost:3000/workflow/trigger", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(pullRequest),
+  });
+  if (!response.ok) {
+    console.log(response.statusText);
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+}
+
+export async function cancelWorkflow(runId: string) {
+  const response = await fetch("http://localhost:3000/workflow/cancel", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ runId }),
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+}
