@@ -1,12 +1,18 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
-import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
+import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: "/kernel-benchmark-deployment/",
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
-})
+  base: "/",
+  plugins: [react(), tailwindcss()],
+  preview: {
+    port: 3500,
+    strictPort: true,
+  },
+  server: {
+    port: 3500,
+    strictPort: true,
+    host: true,
+  },
+});

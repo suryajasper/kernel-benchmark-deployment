@@ -16,27 +16,13 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Router>
       <Routes>
-        <Route
-          path="/kernel-benchmark-deployment/dashboard/:runId"
-          element={<Dashboard />}
-        />
-        <Route
-          path="/kernel-benchmark-deployment/history"
-          element={<History />}
-        />
-        <Route
-          path="/kernel-benchmark-deployment/new"
-          element={<AddKernels />}
-        />
-        <Route path="/kernel-benchmark-deployment/tune" element={<Tuning />} />
+        <Route path="/dashboard/:runId" element={<Dashboard />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/new" element={<AddKernels />} />
+        <Route path="/tune" element={<Tuning />} />
         <Route
           path="*"
-          element={
-            <Navigate
-              to="/kernel-benchmark-deployment/dashboard/baseline"
-              replace
-            />
-          }
+          element={<Navigate to="/dashboard/baseline" replace />}
         />
       </Routes>
     </Router>

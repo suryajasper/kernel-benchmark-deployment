@@ -1,5 +1,10 @@
 import { twMerge } from "tailwind-merge";
-import type { BenchmarkJobStep, BenchmarkRun, RepoPullRequest } from "../types";
+import type {
+  BenchmarkJobStep,
+  BenchmarkRun,
+  PerformanceRun,
+  RepoPullRequest,
+} from "../types";
 import { toTitleCase } from "../utils/utils";
 import ChangeStatBar from "./ChangeStatBar";
 import { BarLoader } from "react-spinners";
@@ -9,7 +14,7 @@ import { cancelWorkflow, triggerWorkflow } from "../utils/github";
 interface RunStatusContainerProps {
   children: React.ReactNode;
   fill?: boolean;
-  run?: BenchmarkRun;
+  run?: PerformanceRun;
   actions?: Record<string, (runId: string) => void>;
 }
 
@@ -24,14 +29,6 @@ function RunStatusContainer({
 
   if (fill) {
     let backgroundTint = "gray";
-
-    if (run) {
-      if (run.status === "completed") {
-        backgroundTint = run.conclusion === "success" ? "green" : "red";
-      } else if (run.status === "in_progress") {
-        backgroundTint = "yellow";
-      }
-    }
 
     return (
       <div
@@ -148,6 +145,24 @@ export function JobProgressBar({ numSteps, steps }: JobProgressBarProps) {
   );
 }
 
+interface ChangeStatusProps {
+  run: PerformanceRun;
+}
+
+export function ChangeStatView({ run }: ChangeStatusProps) {
+  return (
+    <RunStatusContainer run={run}>
+      {Object.entries(run.changeStats).map(([kernelType, change]) => (
+        <ChangeStatBar
+          key={kernelType}
+          kernelType={kernelType}
+          change={change}
+        />
+      ))}
+    </RunStatusContainer>
+  );
+}
+
 interface RunStatusProps {
   run?: BenchmarkRun;
   pr: RepoPullRequest;
@@ -165,12 +180,16 @@ export default function RunStatus({ run, pr }: RunStatusProps) {
     }
   };
 
+  if (run && Object.keys(run.changeStats).length > 0)
+    return <ChangeStatView run={run} />;
+
   if (!run || (run.status === "completed" && run.conclusion !== "success")) {
+    if (pr.status === "closed") return <div className="ml-auto" />;
     return (
       <RunStatusContainer run={run}>
         <button
           disabled={workflowWaiting}
-          className="bg-blue-100 text-black px-4 py-1 rounded shadow hover:not-[disabled]:bg-blue-200 disabled:bg-gray-300"
+          className="bg-green-300 text-black px-4 py-1 rounded shadow hover:not-[disabled]:bg-green-400 disabled:bg-gray-300 transition-all"
           onClick={(e) => {
             dispatchWorkflow();
             e.stopPropagation();
@@ -181,19 +200,6 @@ export default function RunStatus({ run, pr }: RunStatusProps) {
       </RunStatusContainer>
     );
   }
-
-  if (Object.keys(run.changeStats).length > 0)
-    return (
-      <RunStatusContainer run={run}>
-        {Object.entries(run.changeStats).map(([kernelType, change]) => (
-          <ChangeStatBar
-            key={kernelType}
-            kernelType={kernelType}
-            change={change}
-          />
-        ))}
-      </RunStatusContainer>
-    );
 
   if (["queued", "requested", "pending", "waiting"].includes(run.status))
     return (

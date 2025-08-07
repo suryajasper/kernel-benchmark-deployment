@@ -13,7 +13,8 @@ export const KERNEL_DIMS: Record<KernelType, string[]> = {
   conv: ["B", "H", "W", "C", "P", "Q", "F", "S", "dtype"],
 };
 
-export function getTimeStringRelative(time: Date) {
+export function getTimeStringRelative(time: Date | string) {
+  time = new Date(time);
   const currentTime = new Date();
 
   const diffSeconds = (currentTime.getTime() - time.getTime()) / 1000;

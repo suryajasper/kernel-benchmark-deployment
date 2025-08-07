@@ -97,14 +97,17 @@ export interface BenchmarkJobStep {
   status: JobStatusType;
 }
 
-export interface BenchmarkRun {
+export interface PerformanceRun {
   _id: string;
+  blobName: string;
+  timestamp: Date;
+  changeStats: ChangeStats;
+}
+
+export interface BenchmarkRun extends PerformanceRun {
   headSha: string;
   status: RunStatusType;
   conclusion: RunConclusionType;
   numSteps: number;
   steps: BenchmarkJobStep[];
-  blobName: string;
-  timestamp: Date;
-  changeStats: ChangeStats;
 }

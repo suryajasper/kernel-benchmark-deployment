@@ -1,26 +1,16 @@
 import type {
   RepoPullRequest,
-  ChangeAuthor,
-  ChangeStats,
-  KernelType,
   RepoModification,
   RepoMerge,
   BenchmarkRun,
+  PerformanceRun,
 } from "../types";
-
-const KERNEL_TYPES = ["gemm", "attention", "convolution"] as const;
-
-function randomStats(): ChangeStats {
-  const stats: Record<KernelType, number> = {} as any;
-  for (const k of KERNEL_TYPES) {
-    stats[k as KernelType] = parseFloat((Math.random() * 150 - 50).toFixed(2)); // change of speed as percentage (-50% to +100%)
-  }
-  return stats;
-}
 
 export async function fetchModifications() {
   try {
-    const response = await fetch("http://localhost:3000/pull_requests");
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_SERVER_URL}/pull_requests`
+    );
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
@@ -44,7 +34,9 @@ export async function fetchModifications() {
 
 export async function fetchRuns() {
   try {
-    const response = await fetch("http://localhost:3000/runs");
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_SERVER_URL}/runs`
+    );
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
@@ -56,27 +48,50 @@ export async function fetchRuns() {
   }
 }
 
-export async function rebase() {
+export async function fetchPerformanceRuns() {
   try {
-    const response = await fetch("http://localhost:3000/pull_requests/rebase", {
-      method: "POST",
-    });
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_SERVER_URL}/performances`
+    );
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
+
+    const perfs: PerformanceRun[] = await response.json();
+    return perfs;
   } catch (error) {
-    console.log(`Failed to rebase: ${error}`);
+    throw new Error(`Failed to fetch runs: ${error}`);
   }
 }
 
+export async function rebase() {
+  const response = await fetch(
+    `${import.meta.env.VITE_BACKEND_SERVER_URL}/rebase`,
+    {
+      method: "POST",
+    }
+  );
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const modifications = data["modifications"] as RepoModification[];
+  const performances = data["performances"] as PerformanceRun[];
+  return { modifications, performances };
+}
+
 export async function triggerWorkflow(pullRequest: RepoPullRequest) {
-  const response = await fetch("http://localhost:3000/workflow/trigger", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(pullRequest),
-  });
+  const response = await fetch(
+    `${import.meta.env.VITE_BACKEND_SERVER_URL}/workflow/trigger`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(pullRequest),
+    }
+  );
   if (!response.ok) {
     console.log(response.statusText);
     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -84,13 +99,16 @@ export async function triggerWorkflow(pullRequest: RepoPullRequest) {
 }
 
 export async function cancelWorkflow(runId: string) {
-  const response = await fetch("http://localhost:3000/workflow/cancel", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ runId }),
-  });
+  const response = await fetch(
+    `${import.meta.env.VITE_BACKEND_SERVER_URL}/workflow/cancel`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ runId }),
+    }
+  );
   if (!response.ok) {
     throw new Error(`HTTP error! Status: ${response.status}`);
   }

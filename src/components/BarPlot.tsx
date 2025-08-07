@@ -11,7 +11,6 @@ import {
 } from "chart.js";
 import type { Kernel } from "../types";
 import { getBackendColor } from "../utils/color";
-import { KERNEL_DIMS } from "../utils/utils";
 
 Chart.register(
   BarController,
