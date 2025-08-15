@@ -71,7 +71,5 @@ export function getCommonKernels(kernels: Kernel[]): Kernel[] {
         )
       : new Set<string>();
 
-  console.log("fuck", commonShapes);
-
   return kernels.filter((k) => commonShapes.has(hashKernel(k)));
 }
