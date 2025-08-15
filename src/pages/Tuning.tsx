@@ -1,59 +1,35 @@
 import { useEffect, useMemo, useState } from "react";
 import PageContainer from "../components/PageContainer";
-import type { Kernel, KernelType } from "../types";
-import { fetchData } from "../utils/csv";
-import { toTitleCase } from "../utils/utils";
-import { getBackendColor } from "../utils/color";
-import type { ColorInstance } from "color";
-import Color from "color";
+import type { KernelConfig, KernelType, TuningResults } from "../types";
+import {
+  fetchKernels,
+  fetchTuningResults,
+  triggerTuningWorkflow,
+} from "../utils/github";
+import KernelList from "../components/KernelList";
 import FilterControls from "../components/FilterControls";
 
-interface ItemTagProps {
-  color?: ColorInstance | string;
-  colorHash?: string;
-  label: string;
-}
-
-function ItemTag({ color, colorHash, label }: ItemTagProps) {
-  if (!color) {
-    color = getBackendColor(colorHash || label);
-  }
-  const colorStr = Color(color).lighten(0.4).string();
-
-  return (
-    <div
-      style={{ backgroundColor: colorStr }}
-      className="rounded-md px-2 text-black"
-    >
-      {label}
-    </div>
-  );
-}
-
 export default function Tuning() {
-  const [kernels, setKernels] = useState<Kernel[]>([]);
+  const [kernels, setKernels] = useState<KernelConfig[]>([]);
+  const [tuningResults, setTuningResults] = useState<TuningResults>({});
   const [query, setQuery] = useState<string>("");
-  const [kernelType, setKernelType] = useState<KernelType>("attention");
-  const [selectedBackends, setSelectedBackends] = useState<string[]>([]);
+  const [selectedKernelTypes, setSelectedKernelTypes] = useState<KernelType[]>([
+    "attention",
+  ]);
+  const [selectedTuning, setSelectedTuning] = useState<string[]>([
+    "tuned",
+    "untuned",
+  ]);
   const [selectedDtypes, setSelectedDtypes] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tuningKernels, setTuningKernels] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    fetchData("baseline").then(setKernels);
+    fetchKernels().then(setKernels);
+    fetchTuningResults().then(setTuningResults);
   }, []);
 
-  useEffect(() => {
-    const uniqueBackends = Array.from(new Set(kernels.map((k) => k.backend)));
-    const uniqueDtypes = Array.from(new Set(kernels.map((k) => k.dtype)));
-    const uniqueTags = Array.from(new Set(kernels.map((k) => k.tag)));
-
-    setSelectedBackends(uniqueBackends);
-    setSelectedDtypes(uniqueDtypes);
-    setSelectedTags(uniqueTags);
-  }, [kernels]);
-
-  const matchQuery = (kernel: Kernel) => {
+  const matchQuery = (kernel: KernelConfig) => {
     if (query.length === 0) return true;
     const name = kernel.name.toLowerCase();
     const queries = query.toLowerCase().split(" ");
@@ -67,26 +43,48 @@ export default function Tuning() {
     return kernels.filter(
       (k) =>
         matchQuery(k) &&
-        selectedBackends.includes(k.backend) &&
+        k.allowedBackends.filter((backend) => backend.startsWith("wave"))
+          .length > 0 &&
         selectedDtypes.includes(k.dtype) &&
         selectedTags.includes(k.tag) &&
-        kernelType === k.kernelType
+        selectedKernelTypes.includes(k.kernelType as KernelType) &&
+        ((tuningResults[k.name] && selectedTuning.includes("tuned")) ||
+          (!tuningResults[k.name] && selectedTuning.includes("untuned")))
     );
   }, [
     kernels,
-    kernelType,
-    selectedBackends,
+    selectedKernelTypes,
     selectedDtypes,
     selectedTags,
+    selectedTuning,
     query,
   ]);
 
-  const toggleTuningKernel = (kernelId: string) => {
+  const getUnique = (fromKernels: KernelConfig[]) => {
+    const uniqueDtypes = Array.from(new Set(fromKernels.map((k) => k.dtype)));
+    const uniqueTags = Array.from(new Set(fromKernels.map((k) => k.tag)));
+    return { uniqueDtypes, uniqueTags };
+  };
+
+  const { uniqueDtypes, uniqueTags } = useMemo(
+    () => getUnique(kernels),
+    [filteredKernels]
+  );
+
+  useEffect(() => {
+    const unique = getUnique(kernels);
+    setSelectedDtypes(unique.uniqueDtypes);
+    setSelectedTags(unique.uniqueTags);
+  }, [kernels]);
+
+  const toggleTuningKernels = (kernelIds: string[], state: boolean) => {
     setTuningKernels((oldTk) => {
-      if (!oldTk.has(kernelId)) {
-        return new Set([...oldTk, kernelId]);
+      if (state) {
+        return new Set(Array.from(oldTk).concat(kernelIds));
       } else {
-        return new Set([...oldTk].filter((id) => id !== kernelId));
+        return new Set(
+          Array.from(oldTk).filter((id) => !kernelIds.includes(id))
+        );
       }
     });
   };
@@ -102,52 +100,64 @@ export default function Tuning() {
             onInput={(e) => setQuery(e.currentTarget.value)}
           />
           {tuningKernels.size > 0 && (
-            <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              onClick={() => {
+                triggerTuningWorkflow(Array.from(tuningKernels));
+              }}
+            >
               Tune {tuningKernels.size} Kernels
             </button>
           )}
         </div>
         <FilterControls
-          kernels={kernels}
-          kernelType={kernelType}
-          setKernelType={setKernelType}
-          selectedBackends={selectedBackends}
-          setSelectedBackends={setSelectedBackends}
-          selectedDtypes={selectedDtypes}
-          setSelectedDtypes={setSelectedDtypes}
-          selectedTags={selectedTags}
-          setSelectedTags={setSelectedTags}
+          filters={[
+            {
+              type: "multi",
+              props: {
+                title: "Tuned",
+                options: ["tuned", "untuned"],
+                selectedOptions: selectedTuning,
+                onInput: setSelectedTuning,
+              },
+            },
+            {
+              type: "multi",
+              props: {
+                title: "Kernel Type",
+                options: Array.from(new Set(kernels.map((k) => k.kernelType))),
+                selectedOptions: selectedKernelTypes,
+                onInput: (kTypes: string[]) =>
+                  setSelectedKernelTypes(kTypes as KernelType[]),
+              },
+            },
+            {
+              type: "multi",
+              props: {
+                title: "Data Types",
+                options: uniqueDtypes,
+                selectedOptions: selectedDtypes,
+                onInput: setSelectedDtypes,
+              },
+            },
+            {
+              type: "multi",
+              props: {
+                title: "Tags",
+                options: uniqueTags,
+                selectedOptions: selectedTags,
+                onInput: setSelectedTags,
+              },
+            },
+          ]}
         />
       </div>
-      <div className="flex flex-col w-[100%] gap-1 px-4">
-        {filteredKernels.map((k) => (
-          <div
-            className="cursor-pointer flex flex-row justify-between w-[100%] bg-gray-100 border border-gray-500 rounded-md py-1 px-4"
-            onClick={() => toggleTuningKernel(k.id)}
-          >
-            <div className="flex flex-row gap-4">
-              <input
-                type="checkbox"
-                checked={tuningKernels.has(k.id)}
-                onInput={() => toggleTuningKernel(k.id)}
-                onClick={(e) => e.stopPropagation()}
-              />
-              <ItemTag label={toTitleCase(k.kernelType)} />
-              <ItemTag label={k.backend} />
-              <>
-                {Object.entries(k.shape).map(([dimName, dimValue]) => (
-                  <ItemTag
-                    label={`${dimName} = ${dimValue}`}
-                    colorHash={`dim_${dimName}`}
-                  />
-                ))}
-              </>
-              <ItemTag label={`dtype = ${k.dtype}`} />
-            </div>
-            <div>Last tuned: Never</div>
-          </div>
-        ))}
-      </div>
+      <KernelList
+        tuningResults={tuningResults}
+        kernels={filteredKernels}
+        toggleKernels={toggleTuningKernels}
+        activeKernels={tuningKernels}
+      />
     </PageContainer>
   );
 }

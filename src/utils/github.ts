@@ -4,6 +4,8 @@ import type {
   RepoMerge,
   BenchmarkRun,
   PerformanceRun,
+  KernelConfig,
+  TuningResults,
 } from "../types";
 
 export async function fetchModifications() {
@@ -64,6 +66,30 @@ export async function fetchPerformanceRuns() {
   }
 }
 
+export async function fetchKernels() {
+  const response = await fetch(
+    `${import.meta.env.VITE_BACKEND_SERVER_URL}/kernels`
+  );
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  const kernelConfigs: KernelConfig[] = await response.json();
+  return kernelConfigs;
+}
+
+export async function fetchTuningResults() {
+  const response = await fetch(
+    `${import.meta.env.VITE_BACKEND_SERVER_URL}/tune/results`
+  );
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  const tuningConfigs: TuningResults = await response.json();
+  return tuningConfigs;
+}
+
 export async function rebase() {
   const response = await fetch(
     `${import.meta.env.VITE_BACKEND_SERVER_URL}/rebase`,
@@ -110,6 +136,23 @@ export async function cancelWorkflow(runId: string) {
     }
   );
   if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+}
+
+export async function triggerTuningWorkflow(kernelIds: string[]) {
+  const response = await fetch(
+    `${import.meta.env.VITE_BACKEND_SERVER_URL}/tune`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ kernel_ids: kernelIds }),
+    }
+  );
+  if (!response.ok) {
+    console.log(response.statusText);
     throw new Error(`HTTP error! Status: ${response.status}`);
   }
 }

@@ -1,6 +1,6 @@
 import RooflinePlot from "../components/RooflinePlot";
 import { BarComparisonPlot } from "../components/BarPlot";
-import FilterControls from "../components/FilterControls";
+import { DashboardFilterControls } from "../components/FilterControls";
 import { useEffect, useMemo, useState } from "react";
 import type { Kernel, KernelType } from "../types";
 import { fetchData } from "../utils/csv";
@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [kernels, setKernels] = useState<Kernel[]>([]);
   const [selectedKernelId, setSelectedKernelId] = useState<string | null>(null);
   const [kernelType, setKernelType] = useState<KernelType>("attention");
+  const [selectedMachine, setSelectedMachine] = useState<string>("MI325X");
   const [selectedBackends, setSelectedBackends] = useState<string[]>([]);
   const [selectedDtypes, setSelectedDtypes] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -27,10 +28,12 @@ export default function Dashboard() {
     const uniqueBackends = Array.from(new Set(kernels.map((k) => k.backend)));
     const uniqueDtypes = Array.from(new Set(kernels.map((k) => k.dtype)));
     const uniqueTags = Array.from(new Set(kernels.map((k) => k.tag)));
+    const uniqueMachines = Array.from(new Set(kernels.map((k) => k.machine)));
 
     setSelectedBackends(uniqueBackends);
     setSelectedDtypes(uniqueDtypes);
     setSelectedTags(uniqueTags);
+    setSelectedMachine(uniqueMachines[0] || "none");
   }, [kernels]);
 
   const filteredKernels = useMemo(() => {
@@ -39,6 +42,7 @@ export default function Dashboard() {
         selectedBackends.includes(k.backend) &&
         selectedDtypes.includes(k.dtype) &&
         selectedTags.includes(k.tag) &&
+        selectedMachine === k.machine &&
         kernelType === k.kernelType
     );
   }, [kernels, kernelType, selectedBackends, selectedDtypes, selectedTags]);
@@ -73,7 +77,7 @@ export default function Dashboard() {
   return (
     <PageContainer activePage="dashboard" isLoading={kernels.length === 0}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <FilterControls
+        <DashboardFilterControls
           kernels={kernels}
           kernelType={kernelType}
           setKernelType={setKernelType}
@@ -83,6 +87,8 @@ export default function Dashboard() {
           setSelectedDtypes={setSelectedDtypes}
           selectedTags={selectedTags}
           setSelectedTags={setSelectedTags}
+          selectedMachine={selectedMachine}
+          setSelectedMachine={setSelectedMachine}
         />
       </div>
       <div className="flex flex-col lg:flex-row gap-6 items-center">

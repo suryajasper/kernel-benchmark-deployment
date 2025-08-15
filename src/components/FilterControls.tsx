@@ -23,7 +23,7 @@ export function SingleSelectFilter({
   onInput,
 }: SingleSelectProps) {
   return (
-    <div className="flex gap-2 items-center">
+    <div className="select-none flex gap-2 items-center">
       <span className="font-semibold">{title}:</span>
       {options.map((option) => (
         <button
@@ -58,12 +58,12 @@ export function MultiSelectFilter({
   }
 
   return (
-    <div className="flex gap-2 items-center">
+    <div className="select-none flex gap-2 items-center">
       <span className="font-semibold">{title}:</span>
       {options.map((option) => (
         <button
           key={option}
-          className="px-2 py-1 rounded"
+          className="px-2 py-1 rounded outline-0"
           style={{
             backgroundColor:
               selectedOptions.includes(option) && distinctColors
@@ -72,7 +72,11 @@ export function MultiSelectFilter({
                   ? "#bfdbfe" // blue-200
                   : "#ffffff",
           }}
-          onClick={() => handleToggle(option, selectedOptions, onInput)}
+          onClick={(e) => {
+            if (e.shiftKey) onInput([option]);
+            else if (e.ctrlKey) onInput(options);
+            else handleToggle(option, selectedOptions, onInput);
+          }}
         >
           {option}
         </button>
@@ -81,7 +85,30 @@ export function MultiSelectFilter({
   );
 }
 
+interface FilterConfig {
+  type: "single" | "multi";
+  props: SingleSelectProps | MultiSelectProps;
+}
+
 interface FilterControlsProps {
+  filters: FilterConfig[];
+}
+
+export default function FilterControls({ filters }: FilterControlsProps) {
+  return (
+    <div className="flex w-[100%] rounded-md shadow-md bg-gray-100 p-3 flex-wrap mb-6 gap-6 items-center justify-center">
+      {filters.map((filter) =>
+        filter.type === "single" ? (
+          <SingleSelectFilter {...(filter.props as SingleSelectProps)} />
+        ) : (
+          <MultiSelectFilter {...(filter.props as MultiSelectProps)} />
+        )
+      )}
+    </div>
+  );
+}
+
+interface DashboardFilterControlsProps {
   kernels: Kernel[];
   kernelType: KernelType;
   setKernelType: (type: KernelType) => void;
@@ -91,9 +118,11 @@ interface FilterControlsProps {
   setSelectedDtypes: (values: string[]) => void;
   selectedTags: string[];
   setSelectedTags: (values: string[]) => void;
+  selectedMachine: string;
+  setSelectedMachine: (value: string) => void;
 }
 
-export default function FilterControls({
+export function DashboardFilterControls({
   kernels,
   kernelType,
   setKernelType,
@@ -103,40 +132,65 @@ export default function FilterControls({
   setSelectedDtypes,
   selectedTags,
   setSelectedTags,
-}: FilterControlsProps) {
+  selectedMachine,
+  setSelectedMachine,
+}: DashboardFilterControlsProps) {
   const activeKernels = kernels.filter((k) => k.kernelType === kernelType);
   const backends = Array.from(new Set(activeKernels.map((k) => k.backend)));
   const dtypes = Array.from(new Set(activeKernels.map((k) => k.dtype)));
   const tags = Array.from(new Set(activeKernels.map((k) => k.tag)));
+  const machines = Array.from(new Set(activeKernels.map((k) => k.machine)));
 
   return (
-    <div className="flex w-[100%] rounded-md shadow-md bg-gray-100 p-3 flex-wrap mb-6 gap-6 items-center justify-center">
-      <SingleSelectFilter
-        title="Kernel Type"
-        options={Object.keys(KERNEL_DIMS)}
-        selectedOption={kernelType}
-        onInput={(str) => setKernelType(str as KernelType)}
-      />
-
-      <MultiSelectFilter
-        title="Backends"
-        options={backends}
-        selectedOptions={selectedBackends}
-        distinctColors
-        onInput={setSelectedBackends}
-      />
-      <MultiSelectFilter
-        title="Data Types"
-        options={dtypes}
-        selectedOptions={selectedDtypes}
-        onInput={setSelectedDtypes}
-      />
-      <MultiSelectFilter
-        title="Tags"
-        options={tags}
-        selectedOptions={selectedTags}
-        onInput={setSelectedTags}
-      />
-    </div>
+    <FilterControls
+      filters={[
+        {
+          type: "single",
+          props: {
+            title: "Machine",
+            options: machines,
+            selectedOption: selectedMachine,
+            onInput: (machine: string) => setSelectedMachine(machine),
+          },
+        },
+        {
+          type: "single",
+          props: {
+            title: "Kernel Type",
+            options: Object.keys(KERNEL_DIMS),
+            selectedOption: kernelType,
+            onInput: (str: string) => setKernelType(str as KernelType),
+          },
+        },
+        {
+          type: "multi",
+          props: {
+            title: "Backends",
+            options: backends,
+            selectedOptions: selectedBackends,
+            distinctColors: true,
+            onInput: setSelectedBackends,
+          },
+        },
+        {
+          type: "multi",
+          props: {
+            title: "Data Types",
+            options: dtypes,
+            selectedOptions: selectedDtypes,
+            onInput: setSelectedDtypes,
+          },
+        },
+        {
+          type: "multi",
+          props: {
+            title: "Tags",
+            options: tags,
+            selectedOptions: selectedTags,
+            onInput: setSelectedTags,
+          },
+        },
+      ]}
+    />
   );
 }

@@ -4,6 +4,7 @@ export type KernelType = "gemm" | "attention" | "conv";
 
 export interface Kernel {
   id: string;
+  machine: string;
   backend: string;
   kernelType: KernelType;
   name: string;
@@ -13,7 +14,19 @@ export interface Kernel {
   arithmeticIntensity: number;
   tflops: number;
   shape: Record<string, any>;
+  tuningConfig: Record<string, any> | undefined | null;
   ok: string;
+}
+
+export interface KernelConfig {
+  id: string;
+  kernelType: string;
+  name: string;
+  tag: string;
+  dtype: string;
+  allowedBackends: string[];
+  problem: Record<string, any>;
+  tunedConfig?: Record<string, any>;
 }
 
 /* Source Control */
@@ -111,3 +124,13 @@ export interface BenchmarkRun extends PerformanceRun {
   numSteps: number;
   steps: BenchmarkJobStep[];
 }
+
+export interface TuningConfig {
+  _id: string;
+  kernelName: string;
+  runId: string;
+  timestamp: Date;
+  result: Record<string, any>;
+}
+
+export type TuningResults = Record<string, TuningConfig[]>;
