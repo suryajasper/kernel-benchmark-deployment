@@ -26,7 +26,7 @@ const Navbar: React.FC<NavbarProps> = ({ activePage }) => {
         {navItems.map((item) => (
           <li key={item.name}>
             <Link
-              to={`/kernel-benchmark-deployment/${item.name}`}
+              to={`/${item.name}`}
               className={twMerge(
                 "flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors",
                 activePage === item.name ? "font-semibold text-blue-600" : ""
