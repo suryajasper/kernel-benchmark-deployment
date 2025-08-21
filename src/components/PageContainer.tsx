@@ -1,19 +1,35 @@
-import type { ReactNode } from "react";
+// PageContainer.tsx
+import { useEffect, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import type { PageName } from "./Navbar";
 import Navbar from "./Navbar";
 import { ClockLoader } from "react-spinners";
+import { useAuth } from "../contexts/AuthContext";
 
 interface PageContainerProps {
   activePage: PageName;
   children: ReactNode;
   isLoading?: boolean;
+  requireAuth?: boolean;
 }
+
+const authPages: PageName[] = ["history", "new", "tune"];
 
 export default function PageContainer({
   activePage,
   children,
   isLoading,
 }: PageContainerProps) {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const requireAuth = authPages.includes(activePage);
+
+  useEffect(() => {
+    if (requireAuth && !isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [requireAuth, isAuthenticated, navigate]);
+
   return (
     <>
       <Navbar activePage={activePage} />
