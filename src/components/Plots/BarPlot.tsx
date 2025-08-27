@@ -9,8 +9,8 @@ import {
   Legend,
   Title,
 } from "chart.js";
-import type { Kernel } from "../types";
-import { getBackendColor } from "../utils/color";
+import type { Kernel } from "../../types";
+import { getBackendColor } from "../../utils/color";
 
 Chart.register(
   BarController,
@@ -24,9 +24,10 @@ Chart.register(
 
 interface BarComparisonPlotProps {
   kernels: Kernel[];
+  metric: string;
 }
 
-export function BarComparisonPlot({ kernels }: BarComparisonPlotProps) {
+export function BarComparisonPlot({ kernels, metric }: BarComparisonPlotProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
 
@@ -38,7 +39,9 @@ export function BarComparisonPlot({ kernels }: BarComparisonPlotProps) {
 
     for (const kernel of kernels) {
       if (!backendGroups[kernel.backend]) backendGroups[kernel.backend] = [];
-      backendGroups[kernel.backend].push(kernel.meanMicroseconds);
+      backendGroups[kernel.backend].push(
+        metric === "tflops" ? kernel.tflops : kernel.meanMicroseconds
+      );
     }
 
     const labels = Object.keys(backendGroups);
@@ -53,7 +56,7 @@ export function BarComparisonPlot({ kernels }: BarComparisonPlotProps) {
         labels,
         datasets: [
           {
-            label: "Avg Mean Time (μs)",
+            label: metric === "tflops" ? "Avg TFLOPs" : "Avg Mean Time (μs)",
             data,
             backgroundColor: labels.map((label) =>
               getBackendColor(label).string()
@@ -67,7 +70,7 @@ export function BarComparisonPlot({ kernels }: BarComparisonPlotProps) {
           y: {
             title: {
               display: true,
-              text: "Mean Time (μs)",
+              text: metric === "tflops" ? "TFLOPs" : "Mean Time (μs)",
             },
             beginAtZero: true,
           },
@@ -79,7 +82,7 @@ export function BarComparisonPlot({ kernels }: BarComparisonPlotProps) {
         },
       },
     });
-  }, [kernels]);
+  }, [kernels, metric]);
 
   return <canvas ref={canvasRef} className="w-full h-[500px]" />;
 }

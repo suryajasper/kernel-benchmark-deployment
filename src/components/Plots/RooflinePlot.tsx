@@ -12,8 +12,8 @@ import {
   LineElement,
 } from "chart.js";
 import zoomPlugin from "chartjs-plugin-zoom";
-import type { Kernel } from "../types";
-import { getBackendColor } from "../utils/color";
+import type { Kernel } from "../../types";
+import { getBackendColor } from "../../utils/color";
 
 Chart.register(
   ScatterController,

@@ -73,3 +73,43 @@ export function getCommonKernels(kernels: Kernel[]): Kernel[] {
 
   return kernels.filter((k) => commonShapes.has(hashKernel(k)));
 }
+
+export function filterKernelsByPercentile(
+  kernels: Kernel[],
+  percentile: number
+): Kernel[] {
+  // Group kernels by backend
+  const kernelsByBackend = kernels.reduce(
+    (acc, kernel) => {
+      if (!acc[kernel.backend]) {
+        acc[kernel.backend] = [];
+      }
+      acc[kernel.backend].push(kernel);
+      return acc;
+    },
+    {} as Record<string, Kernel[]>
+  );
+
+  // Filter each backend's kernels
+  const filteredKernels: Kernel[] = [];
+
+  for (const backend in kernelsByBackend) {
+    const backendKernels = kernelsByBackend[backend];
+
+    // Sort by meanMicroseconds in ascending order (lower is better performance)
+    const sortedKernels = [...backendKernels].sort(
+      (a, b) => a.meanMicroseconds - b.meanMicroseconds
+    );
+
+    // Calculate the cutoff index for the given percentile
+    // For percentile 0.95, we want to keep the top 95% performers (lowest 95% times)
+    const cutoffIndex = Math.floor(sortedKernels.length * percentile);
+
+    // Take kernels up to the cutoff index
+    const topPerformers = sortedKernels.slice(0, cutoffIndex);
+
+    filteredKernels.push(...topPerformers);
+  }
+
+  return filteredKernels;
+}

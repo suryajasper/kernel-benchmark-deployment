@@ -135,11 +135,13 @@ export function DashboardFilterControls({
   selectedMachine,
   setSelectedMachine,
 }: DashboardFilterControlsProps) {
-  const activeKernels = kernels.filter((k) => k.kernelType === kernelType);
+  const machines = Array.from(new Set(kernels.map((k) => k.machine)));
+  const activeKernels = kernels.filter(
+    (k) => k.kernelType === kernelType && k.machine === selectedMachine
+  );
   const backends = Array.from(new Set(activeKernels.map((k) => k.backend)));
   const dtypes = Array.from(new Set(activeKernels.map((k) => k.dtype)));
   const tags = Array.from(new Set(activeKernels.map((k) => k.tag)));
-  const machines = Array.from(new Set(activeKernels.map((k) => k.machine)));
 
   return (
     <FilterControls
