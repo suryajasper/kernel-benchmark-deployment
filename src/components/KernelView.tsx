@@ -1,4 +1,5 @@
 import type { Kernel } from "../types";
+import { getBackendColor } from "../utils/color";
 import { KERNEL_DIMS, toTitleCase } from "../utils/utils";
 
 interface ShapeSelectorProps {
@@ -125,7 +126,14 @@ export default function KernelView({
           </thead>
           <tbody>
             {sameShapeKernels.map((k) => (
-              <tr key={k.id}>
+              <tr
+                key={k.id}
+                style={{
+                  backgroundColor: getBackendColor(k.backend)
+                    .lighten(0.5)
+                    .hex(),
+                }}
+              >
                 <td className="border px-2 py-1">{k.backend}</td>
                 <td className="border px-2 py-1">
                   {k.arithmeticIntensity.toFixed(2)}

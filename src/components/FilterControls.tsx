@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import type { Kernel, KernelType } from "../types";
 import { getBackendColor } from "../utils/color";
-import { KERNEL_DIMS } from "../utils/utils";
+import {
+  FILTER_CONFIGS,
+  type FilterState,
+  type AvailableFilterOptions,
+} from "../hooks/useKernelFilters";
 
 interface SelectProps {
   title: string;
@@ -19,7 +22,7 @@ interface MultiSelectProps extends SelectProps {
 
 export function SingleSelectFilter({
   title,
-  options,
+  options = [],
   selectedOption,
   onInput,
 }: SingleSelectProps) {
@@ -41,7 +44,7 @@ export function SingleSelectFilter({
 
 export function MultiSelectFilter({
   title,
-  options,
+  options = [],
   selectedOptions,
   distinctColors,
   onInput,
@@ -236,110 +239,72 @@ export default function FilterControls({ filters }: FilterControlsProps) {
 }
 
 interface DashboardFilterControlsProps {
-  kernels: Kernel[];
-  kernelType: KernelType;
-  setKernelType: (type: KernelType) => void;
-  selectedBackends: string[];
-  setSelectedBackends: (values: string[]) => void;
-  selectedDtypes: string[];
-  setSelectedDtypes: (values: string[]) => void;
-  selectedTags: string[];
-  setSelectedTags: (values: string[]) => void;
-  selectedMachine: string;
-  setSelectedMachine: (value: string) => void;
-  selectedVariants: string[];
-  setSelectedVariants: (value: string[]) => void;
+  filters: FilterState;
+  availableOptions: AvailableFilterOptions;
+  updateFilter: (key: keyof FilterState, value: any) => void;
 }
 
 export function DashboardFilterControls({
-  kernels,
-  kernelType,
-  setKernelType,
-  selectedBackends,
-  setSelectedBackends,
-  selectedDtypes,
-  setSelectedDtypes,
-  selectedTags,
-  setSelectedTags,
-  selectedMachine,
-  setSelectedMachine,
-  selectedVariants,
-  setSelectedVariants,
+  filters,
+  availableOptions,
+  updateFilter,
 }: DashboardFilterControlsProps) {
-  const typeKernels = kernels.filter((k) => k.kernelType === kernelType);
-  const machines = Array.from(new Set(typeKernels.map((k) => k.machine)));
-  const activeKernels = typeKernels.filter(
-    (k) => k.machine === selectedMachine
-  );
-  const backends = Array.from(new Set(activeKernels.map((k) => k.backend)));
-  const dtypes = Array.from(new Set(activeKernels.map((k) => k.dtype)));
-  const tags = Array.from(new Set(activeKernels.map((k) => k.tag)));
+  // Build filter configurations dynamically
+  const filterConfigs: FilterConfig[] = FILTER_CONFIGS.filter(
+    (config) => !config.condition || config.condition(filters)
+  ).map((config) => {
+    // Map filter keys to available options keys
+    let options: string[] = [];
 
-  const filters: FilterConfig[] = [
-    {
-      type: "single",
-      props: {
-        title: "Kernel Type",
-        options: Object.keys(KERNEL_DIMS),
-        selectedOption: kernelType,
-        onInput: (str: string) => setKernelType(str as KernelType),
-      },
-    },
-    {
-      type: "single",
-      props: {
-        title: "Machine",
-        options: machines,
-        selectedOption: selectedMachine,
-        onInput: (machine: string) => setSelectedMachine(machine),
-      },
-    },
-    {
-      type: "multi",
-      props: {
-        title: "Backends",
-        options: backends,
-        selectedOptions: selectedBackends,
-        distinctColors: true,
-        onInput: setSelectedBackends,
-      },
-    },
-    {
-      type: "multi",
-      props: {
-        title: "Data Types",
-        options: dtypes,
-        selectedOptions: selectedDtypes,
-        onInput: setSelectedDtypes,
-      },
-    },
-    {
-      type: "multi",
-      props: {
-        title: "Tags",
-        options: tags,
-        selectedOptions: selectedTags,
-        onInput: setSelectedTags,
-      },
-    },
-  ];
+    switch (config.key) {
+      case "kernelType":
+        options = availableOptions.kernelTypes;
+        break;
+      case "machine":
+        options = availableOptions.machines;
+        break;
+      case "backends":
+        options = availableOptions.backends;
+        break;
+      case "dtypes":
+        options = availableOptions.dtypes;
+        break;
+      case "tags":
+        options = availableOptions.tags;
+        break;
+      case "variants":
+        options = availableOptions.variants;
+        break;
+      default:
+        options = [];
+    }
 
-  if (kernelType === "gemm") {
-    const variants = Array.from(
-      new Set(
-        activeKernels.map((k) => k.shape.transpose || k.shape.tA + k.shape.tB)
-      )
-    );
-    filters.push({
-      type: "multi",
-      props: {
-        title: "Transpose",
-        options: variants,
-        selectedOptions: selectedVariants,
-        onInput: setSelectedVariants,
-      },
-    });
-  }
+    // Ensure options is always an array
+    options = options || [];
 
-  return <FilterControls filters={filters} />;
+    if (config.type === "single") {
+      return {
+        type: "single",
+        props: {
+          title: config.title,
+          options,
+          selectedOption: filters[config.key] as string,
+          onInput: (value: string) => updateFilter(config.key, value),
+        },
+      };
+    } else {
+      return {
+        type: "multi",
+        props: {
+          title: config.title,
+          options,
+          selectedOptions: filters[config.key] as string[],
+          distinctColors: config.key === "backends",
+          onInput: (values: string[]) => updateFilter(config.key, values),
+        },
+      };
+    }
+  });
+
+  return <FilterControls filters={filterConfigs} />;
 }

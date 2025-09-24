@@ -17,6 +17,7 @@
     "color": "^5.0.0",
     "iwanthue": "^2.0.0",
     "lorem-ipsum": "^2.0.8",
+    "lucide-react": "^0.543.0",
     "papaparse": "^5.5.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

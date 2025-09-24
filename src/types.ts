@@ -134,3 +134,11 @@ export interface TuningConfig {
 }
 
 export type TuningResults = Record<string, TuningConfig[]>;
+
+export interface BenchmarkWorkflowProps {
+  githubUrl: string;
+  repoName: string;
+  branchName: string;
+  selectedBackends: string[];
+  maxKernels?: number;
+}
