@@ -37,36 +37,28 @@ export interface ChangeAuthor {
 
 export type ChangeStats = Record<KernelType, number>;
 
-export interface RepoModification {
+// export interface RepoCommit {
+//   _id: string;
+//   title: string;
+//   author: ChangeAuthor;
+//   timestamp: Date;
+//   description?: string;
+// }
+
+export interface RepoPullRequest {
   _id: string;
-  headSha: string;
   url: string;
-  type: "pr" | "merge";
-  timestamp: Date;
-  author: ChangeAuthor;
-}
-
-export interface RepoCommit {
-  _id: string;
-  title: string;
-  author: ChangeAuthor;
-  timestamp: Date;
-  description?: string;
-}
-
-export interface RepoPullRequest extends RepoModification {
   type: "pr";
+  timestamp: Date;
+  author: ChangeAuthor;
   title: string;
-  description?: string;
   status: "open" | "closed";
+  commits: number;
   repoName: string;
   branchName: string;
-  commits: RepoCommit[];
-}
-
-export interface RepoMerge extends RepoModification {
-  type: "merge";
-  prId: string;
+  mappingId?: string;
+  description?: string;
+  isMerged: boolean;
 }
 
 export type RunStatusType =

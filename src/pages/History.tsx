@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
-import type {
-  RepoPullRequest,
-  RepoModification,
-  BenchmarkRun,
-  PerformanceRun,
-} from "../types";
+import type { RepoPullRequest, BenchmarkRun, PerformanceRun } from "../types";
 import PageContainer from "../components/PageContainer";
 import {
   fetchModifications,
@@ -19,7 +14,7 @@ import ModificationView, {
 
 export default function History() {
   const [modifications, setModifications] = useState<
-    RepoModification[] | undefined
+    RepoPullRequest[] | undefined
   >(undefined);
   const [runs, setRuns] = useState<Record<string, BenchmarkRun>>({});
   const [performances, setPerformances] = useState<PerformanceRun[]>([]);

@@ -19,10 +19,10 @@ export default function ModificationView({ pr, runs }: ModificationViewProps) {
 
   const navigate = useNavigate();
 
-  const isMerge = pr.status === "closed";
+  const isMerge = pr.isMerged;
 
   const title = pr.title;
-  const run = runs[pr.headSha];
+  const run = pr.mappingId ? runs[pr.mappingId] : undefined;
 
   return (
     <div

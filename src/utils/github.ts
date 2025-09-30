@@ -1,7 +1,5 @@
 import type {
   RepoPullRequest,
-  RepoModification,
-  RepoMerge,
   BenchmarkRun,
   PerformanceRun,
   KernelConfig,
@@ -18,15 +16,15 @@ export async function fetchModifications() {
     }
 
     const data = await response.json();
-    const modifications: RepoModification[] = [];
+    const modifications: RepoPullRequest[] = [];
 
     for (let obj of data) {
       obj["timestamp"] = new Date(obj["timestamp"]);
-      if (obj["type"] === "pr") modifications.push(obj as RepoPullRequest);
-      else if (obj["type"] === "merge") modifications.push(obj as RepoMerge);
+      modifications.push(obj as RepoPullRequest);
     }
 
     modifications.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    console.log("modifications", modifications);
 
     return modifications;
   } catch (error) {
@@ -102,7 +100,7 @@ export async function rebase() {
   }
 
   const data = await response.json();
-  const modifications = data["modifications"] as RepoModification[];
+  const modifications = data["modifications"] as RepoPullRequest[];
   const performances = data["performances"] as PerformanceRun[];
   return { modifications, performances };
 }
