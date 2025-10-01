@@ -1,8 +1,8 @@
 // KernelListItem.tsx
 import { useState } from "react";
-import type { KernelConfig, TuningConfig } from "../types";
-import { getTimeStringRelative, toTitleCase } from "../utils/utils";
-import { getBackendColor } from "../utils/color";
+import type { KernelConfig, TuningConfig } from "../../types";
+import { getTimeStringRelative, toTitleCase } from "../../utils/utils";
+import { getBackendColor } from "../../utils/color";
 import type { ColorInstance } from "color";
 import Color from "color";
 import { twMerge } from "tailwind-merge";

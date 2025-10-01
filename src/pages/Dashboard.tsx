@@ -5,7 +5,7 @@ import { DashboardFilterControls } from "../components/FilterControls";
 import { useEffect, useMemo, useState } from "react";
 import type { Kernel } from "../types";
 import { fetchData } from "../utils/csv";
-import KernelView from "../components/KernelView";
+import KernelView from "../components/Kernels/KernelView";
 import PageContainer from "../components/PageContainer";
 import {
   filterKernelsByPercentile,

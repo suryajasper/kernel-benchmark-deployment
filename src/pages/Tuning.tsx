@@ -6,7 +6,7 @@ import {
   fetchTuningResults,
   triggerTuningWorkflow,
 } from "../utils/github";
-import KernelList from "../components/KernelList";
+import KernelList from "../components/Kernels/KernelList";
 import FilterControls from "../components/FilterControls";
 
 export default function Tuning() {

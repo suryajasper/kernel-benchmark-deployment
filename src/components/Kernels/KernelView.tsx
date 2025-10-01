@@ -1,6 +1,6 @@
-import type { Kernel } from "../types";
-import { getBackendColor } from "../utils/color";
-import { KERNEL_DIMS, toTitleCase } from "../utils/utils";
+import type { Kernel } from "../../types";
+import { getBackendColor } from "../../utils/color";
+import { KERNEL_DIMS, toTitleCase } from "../../utils/utils";
 
 interface ShapeSelectorProps {
   selectedKernel: Kernel;
