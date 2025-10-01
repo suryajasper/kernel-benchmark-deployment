@@ -1,7 +1,6 @@
 import type {
   RepoPullRequest,
   BenchmarkRun,
-  PerformanceRun,
   KernelConfig,
   TuningResults,
 } from "../types";
@@ -57,7 +56,7 @@ export async function fetchPerformanceRuns() {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    const perfs: PerformanceRun[] = await response.json();
+    const perfs: BenchmarkRun[] = await response.json();
     return perfs;
   } catch (error) {
     throw new Error(`Failed to fetch runs: ${error}`);
@@ -101,7 +100,7 @@ export async function rebase() {
 
   const data = await response.json();
   const modifications = data["modifications"] as RepoPullRequest[];
-  const performances = data["performances"] as PerformanceRun[];
+  const performances = data["performances"] as BenchmarkRun[];
   return { modifications, performances };
 }
 

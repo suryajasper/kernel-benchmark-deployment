@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { RepoPullRequest, BenchmarkRun, PerformanceRun } from "../types";
+import type { RepoPullRequest, BenchmarkRun } from "../types";
 import PageContainer from "../components/PageContainer";
 import {
   fetchModifications,
@@ -17,7 +17,7 @@ export default function History() {
     RepoPullRequest[] | undefined
   >(undefined);
   const [runs, setRuns] = useState<Record<string, BenchmarkRun>>({});
-  const [performances, setPerformances] = useState<PerformanceRun[]>([]);
+  const [performances, setPerformances] = useState<BenchmarkRun[]>([]);
   const [rebaseWaiting, setRebaseWaiting] = useState<boolean>(false);
 
   useEffect(() => {
@@ -31,7 +31,9 @@ export default function History() {
       fetchRuns().then((runArr) => {
         const newRuns: Record<string, BenchmarkRun> = {};
         for (let run of runArr) {
-          const existingRun = newRuns[run.headSha];
+          if (!run.mappingId)
+            continue;
+          const existingRun = newRuns[run.mappingId];
           if (!existingRun || run.timestamp > existingRun.timestamp) {
             if (
               existingRun &&
@@ -39,7 +41,7 @@ export default function History() {
               run.conclusion !== "success"
             )
               continue;
-            newRuns[run.headSha] = run;
+            newRuns[run.mappingId] = run;
           }
         }
         console.log(newRuns);
@@ -113,7 +115,7 @@ export default function History() {
                     />
                   );
                 } else {
-                  return <PerformanceView perf={item as PerformanceRun} />;
+                  return <PerformanceView perf={item as BenchmarkRun} />;
                 }
               })}
         </div>

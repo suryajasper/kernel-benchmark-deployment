@@ -2,7 +2,6 @@ import { twMerge } from "tailwind-merge";
 import type {
   BenchmarkJobStep,
   BenchmarkRun,
-  PerformanceRun,
   RepoPullRequest,
 } from "../types";
 import { toTitleCase } from "../utils/utils";
@@ -14,7 +13,7 @@ import { cancelWorkflow, triggerWorkflow } from "../utils/github";
 interface RunStatusContainerProps {
   children: React.ReactNode;
   fill?: boolean;
-  run?: PerformanceRun;
+  run?: BenchmarkRun;
   actions?: Record<string, (runId: string) => void>;
 }
 
@@ -146,19 +145,20 @@ export function JobProgressBar({ numSteps, steps }: JobProgressBarProps) {
 }
 
 interface ChangeStatusProps {
-  run: PerformanceRun;
+  run: BenchmarkRun;
 }
 
 export function ChangeStatView({ run }: ChangeStatusProps) {
   return (
     <RunStatusContainer run={run}>
-      {Object.entries(run.changeStats).map(([kernelType, change]) => (
+      {/* {Object.entries(run.changeStats).map(([kernelType, change]) => (
         <ChangeStatBar
           key={kernelType}
           kernelType={kernelType}
           change={change}
         />
-      ))}
+      ))} */}
+      <div>hi</div>
     </RunStatusContainer>
   );
 }
@@ -180,8 +180,8 @@ export default function RunStatus({ run, pr }: RunStatusProps) {
     }
   };
 
-  if (run && Object.keys(run.changeStats).length > 0)
-    return <ChangeStatView run={run} />;
+  // if (run && Object.keys(run.changeStats).length > 0)
+  //   return <ChangeStatView run={run} />;
 
   if (!run || (run.status === "completed" && run.conclusion !== "success")) {
     if (pr.status === "closed") return <div className="ml-auto" />;

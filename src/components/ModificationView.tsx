@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import type { RepoPullRequest, BenchmarkRun, PerformanceRun } from "../types";
+import type { RepoPullRequest, BenchmarkRun } from "../types";
 import { FaCodePullRequest, FaCodeMerge, FaGithub } from "react-icons/fa6";
 import { MdOutlineSpeed } from "react-icons/md";
 import { SlGraph } from "react-icons/sl";
@@ -129,7 +129,7 @@ export default function ModificationView({ pr, runs }: ModificationViewProps) {
 }
 
 interface PerformanceViewProps {
-  perf: PerformanceRun;
+  perf: BenchmarkRun;
 }
 
 export function PerformanceView({ perf }: PerformanceViewProps) {

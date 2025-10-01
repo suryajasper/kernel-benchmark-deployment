@@ -102,19 +102,18 @@ export interface BenchmarkJobStep {
   status: JobStatusType;
 }
 
-export interface PerformanceRun {
+export interface BenchmarkRun {
   _id: string;
+  type: string;
   blobName: string;
   timestamp: Date;
-  changeStats: ChangeStats;
-}
-
-export interface BenchmarkRun extends PerformanceRun {
-  headSha: string;
   status: RunStatusType;
   conclusion: RunConclusionType;
   numSteps: number;
   steps: BenchmarkJobStep[];
+  completed: boolean;
+  hasArtifact: boolean;
+  mappingId?: string;
 }
 
 export interface TuningConfig {
