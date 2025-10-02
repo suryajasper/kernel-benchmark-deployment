@@ -22,6 +22,7 @@ import {
   deleteKernelType,
   addKernels,
 } from "../utils/github";
+import { AlertTriangle, Loader2 } from "lucide-react";
 
 interface KernelData {
   id: string;
@@ -265,30 +266,39 @@ export default function AddKernels() {
 
   return (
     <PageContainer activePage="new">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold mb-2">Add New Kernels</h1>
-          <p className="text-gray-600">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header Section */}
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">
+            Add New Kernels
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Select an existing kernel type or create a new one to add kernels
             for benchmarking.
           </p>
         </div>
 
+        {/* Error Alert */}
         {error && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <div className="flex items-center">
-              <div className="text-yellow-800">
-                <strong>Warning:</strong> {error}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+              <div className="text-amber-800">
+                <strong className="font-semibold">Warning:</strong>
+                <span className="ml-2">{error}</span>
               </div>
             </div>
           </div>
         )}
 
+        {/* Loading State */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center py-16">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading kernel types...</p>
+              <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+              <p className="text-lg font-medium text-gray-600">
+                Loading kernel types...
+              </p>
             </div>
           </div>
         ) : (
@@ -305,35 +315,40 @@ export default function AddKernels() {
           />
         )}
 
+        {/* Kernel Form Section */}
         {selectedKernelType && (
-          <div className="mt-8 p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">
-                Add Kernels for {selectedKernelType.displayName}
-              </h2>
-              <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Add Kernels for {selectedKernelType.displayName}
+                </h2>
+                <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
+              </div>
             </div>
-
-            {viewMode === "user-friendly" ? (
-              <UserFriendlyKernelForm
-                kernelType={selectedKernelType}
-                onSubmit={handleKernelSubmit}
-              />
-            ) : (
-              <EngineerFriendlyKernelForm
-                kernelType={selectedKernelType}
-                onSubmit={handleKernelSubmit}
-              />
-            )}
+            <div className="p-6">
+              {viewMode === "user-friendly" ? (
+                <UserFriendlyKernelForm
+                  kernelType={selectedKernelType}
+                  onSubmit={handleKernelSubmit}
+                />
+              ) : (
+                <EngineerFriendlyKernelForm
+                  kernelType={selectedKernelType}
+                  onSubmit={handleKernelSubmit}
+                />
+              )}
+            </div>
           </div>
         )}
 
+        {/* Empty State */}
         {!selectedKernelType && (
-          <div className="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-lg text-center">
-            <h2 className="text-xl font-semibold mb-2 text-gray-600">
+          <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-12 text-center">
+            <h2 className="text-xl font-semibold text-gray-600 mb-3">
               No Kernel Type Selected
             </h2>
-            <p className="text-gray-500">
+            <p className="text-gray-500 text-lg">
               Please select a kernel type above to start adding kernels, or
               create a new kernel type.
             </p>

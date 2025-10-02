@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FaPlus, FaTimes, FaCheck } from "react-icons/fa";
+import { Plus, X, Check, Copy } from "lucide-react";
 import AttributeInput, { validateAttributeValue } from "./AttributeInput";
 import type { KernelTypeDefinition, KernelTypeAttribute } from "../../types";
 
@@ -152,101 +152,146 @@ export default function UserFriendlyKernelForm({
 
   return (
     <div className="space-y-6">
+      {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium">Add Kernels</h3>
-          <p className="text-sm text-gray-600">
-            Fill in the attributes for each kernel you want to add.
+          <h3 className="text-xl font-semibold text-gray-900">Add Kernels</h3>
+          <p className="text-gray-600 mt-1">
+            Configure kernel attributes for each kernel you want to add.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-600">
-            {validKernelCount} of {kernels.length} kernels valid
-          </span>
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-600 bg-gray-100 px-3 py-2 rounded-lg">
+            <span className="font-medium text-green-600">
+              {validKernelCount}
+            </span>{" "}
+            of <span className="font-medium">{kernels.length}</span> valid
+          </div>
           <button
             onClick={addKernel}
-            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
           >
-            <FaPlus /> Add Kernel
+            <Plus className="w-4 h-4" />
+            <span>Add Kernel</span>
           </button>
         </div>
       </div>
 
+      {/* Kernel Cards */}
       <div className="space-y-4 max-h-96 overflow-y-auto">
         {kernels.map((kernel, kernelIndex) => (
           <div
             key={kernel.id}
-            className={`p-4 border rounded-lg transition-colors ${
+            className={`border-2 rounded-xl transition-all duration-200 ${
               kernel.isValid
-                ? "border-green-200 bg-green-50"
-                : "border-gray-200 bg-white"
+                ? "border-green-200 bg-green-50/50 shadow-sm"
+                : "border-gray-200 bg-white hover:border-gray-300"
             }`}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <h4 className="font-medium">Kernel {kernelIndex + 1}</h4>
-                {kernel.isValid && (
-                  <FaCheck className="text-green-500 text-sm" />
-                )}
+            {/* Kernel Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`p-2 rounded-lg ${
+                    kernel.isValid ? "bg-green-100" : "bg-gray-100"
+                  }`}
+                >
+                  {kernel.isValid ? (
+                    <Check className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <div className="w-4 h-4 rounded-full border-2 border-gray-400" />
+                  )}
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">
+                    Kernel {kernelIndex + 1}
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    {Object.keys(kernel.errors).length > 0
+                      ? `${Object.keys(kernel.errors).length} error(s) to fix`
+                      : kernel.isValid
+                        ? "Ready to submit"
+                        : "Fill in required fields"}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => duplicateKernel(kernelIndex)}
-                  className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+                  title="Duplicate this kernel"
                 >
-                  Duplicate
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Duplicate</span>
                 </button>
                 {kernels.length > 1 && (
                   <button
                     onClick={() => removeKernel(kernelIndex)}
-                    className="p-1 text-red-600 hover:text-red-800 transition-colors"
+                    className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-md transition-colors"
+                    title="Remove this kernel"
                   >
-                    <FaTimes />
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              {kernelType.attributes.map((attribute) => (
-                <AttributeInput
-                  key={attribute.name}
-                  attribute={attribute}
-                  value={kernel.values[attribute.name]}
-                  onChange={(value) =>
-                    updateKernelValue(kernelIndex, attribute.name, value)
-                  }
-                  error={kernel.errors[attribute.name]}
-                />
-              ))}
+            {/* Kernel Attributes */}
+            <div className="p-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {kernelType.attributes.map((attribute) => (
+                  <AttributeInput
+                    key={attribute.name}
+                    attribute={attribute}
+                    value={kernel.values[attribute.name]}
+                    onChange={(value) =>
+                      updateKernelValue(kernelIndex, attribute.name, value)
+                    }
+                    error={kernel.errors[attribute.name]}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-        <div className="text-sm text-gray-600">
-          {allKernelsValid ? (
-            <span className="text-green-600 flex items-center gap-1">
-              <FaCheck /> All kernels are valid and ready to submit
-            </span>
-          ) : (
-            <span>
-              Please fix validation errors before submitting.
-              {validKernelCount > 0 &&
-                ` ${validKernelCount} kernel(s) will be added.`}
-            </span>
-          )}
-        </div>
+      {/* Submit Section */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {allKernelsValid ? (
+              <div className="flex items-center gap-2 text-green-700">
+                <div className="p-1 bg-green-100 rounded-full">
+                  <Check className="w-4 h-4" />
+                </div>
+                <span className="font-medium">
+                  All kernels are valid and ready to submit
+                </span>
+              </div>
+            ) : (
+              <div className="text-gray-600">
+                <span>Please fix validation errors before submitting.</span>
+                {validKernelCount > 0 && (
+                  <span className="ml-1 font-medium text-green-600">
+                    {validKernelCount} kernel(s) will be added.
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
 
-        <button
-          onClick={handleSubmit}
-          disabled={validKernelCount === 0}
-          className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-        >
-          <FaCheck />
-          Add {validKernelCount} Kernel{validKernelCount !== 1 ? "s" : ""}
-        </button>
+          <button
+            onClick={handleSubmit}
+            disabled={validKernelCount === 0}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg shadow-sm transition-all duration-200"
+          >
+            <Check className="w-4 h-4" />
+            <span>
+              Add {validKernelCount} Kernel{validKernelCount !== 1 ? "s" : ""}
+            </span>
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { FaCheck, FaExclamationTriangle, FaTimes } from "react-icons/fa";
+import {
+  Check,
+  AlertTriangle,
+  X,
+  Loader2,
+  Tag,
+  Settings,
+  Monitor,
+} from "lucide-react";
 import Modal from "../Modal/Modal";
 import { ModalHeader, ModalBody, ModalFooter } from "../Modal/ModalComponents";
 import type { KernelTypeDefinition } from "../../types";
@@ -37,7 +45,7 @@ export default function KernelConfirmationModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [config, setConfig] = useState<KernelRuntimeConfig>({
     tag: "",
-    workflow: "all",
+    workflow: "e2e",
     machines: AVAILABLE_MACHINES, // Default to all machines
   });
 
@@ -103,34 +111,91 @@ export default function KernelConfirmationModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalHeader>
         <div className="flex items-center gap-3">
-          <FaCheck className="text-green-600" />
-          Confirm Kernel Addition
+          <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-lg">
+            <Check className="w-5 h-5 text-green-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Confirm Kernel Addition
+            </h2>
+            <p className="text-sm text-gray-600">
+              Review and configure {kernels.length} kernel
+              {kernels.length !== 1 ? "s" : ""} for deployment
+            </p>
+          </div>
         </div>
       </ModalHeader>
 
       <ModalBody>
-        <div className="space-y-6">
+        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
           {/* Configuration Section */}
           <div className="space-y-4">
             {/* Tag Input */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 mb-3">Kernel Tag *</h4>
-              <div className="space-y-2">
+            <div
+              className={`rounded-xl p-5 shadow-sm transition-colors ${
+                !config.tag.trim()
+                  ? "bg-red-50 border-2 border-red-300"
+                  : "bg-white border border-gray-200"
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-lg ${
+                    !config.tag.trim() ? "bg-red-100" : "bg-blue-100"
+                  }`}
+                >
+                  <Tag
+                    className={`w-4 h-4 ${
+                      !config.tag.trim() ? "text-red-600" : "text-blue-600"
+                    }`}
+                  />
+                </div>
+                <div>
+                  <h4
+                    className={`font-semibold ${
+                      !config.tag.trim() ? "text-red-900" : "text-gray-900"
+                    }`}
+                  >
+                    Kernel Tag *
+                  </h4>
+                  <p
+                    className={`text-sm ${
+                      !config.tag.trim() ? "text-red-700" : "text-gray-600"
+                    }`}
+                  >
+                    Identifier for grouping kernels
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-3">
                 <input
                   type="text"
                   value={config.tag}
                   onChange={(e) =>
                     setConfig((prev) => ({ ...prev, tag: e.target.value }))
                   }
-                  className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full px-4 py-3 rounded-lg outline-0 transition-colors ${
+                    !config.tag.trim()
+                      ? "border-2 border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-red-50"
+                      : "border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  }`}
                   placeholder="e.g., llama, square, perf2025"
                   required
                   disabled={isSubmitting}
                 />
-                <p className="text-sm text-blue-700">
+                {!config.tag.trim() && (
+                  <p className="text-sm text-red-600 font-medium">
+                    ⚠ Please enter a tag for the kernels
+                  </p>
+                )}
+                <p
+                  className={`text-sm ${
+                    !config.tag.trim() ? "text-red-700" : "text-gray-600"
+                  }`}
+                >
                   This tag will be applied to all {kernels.length} kernel
                   {kernels.length !== 1 ? "s" : ""} and can be used to group
                   them in the dashboard.
@@ -139,35 +204,104 @@ export default function KernelConfirmationModal({
             </div>
 
             {/* Machine Selection */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h4 className="font-medium text-green-900 mb-3">
-                Target Machines *
-              </h4>
-              <div className="space-y-3">
-                <p className="text-sm text-green-700">
+            <div
+              className={`rounded-xl p-5 shadow-sm transition-colors ${
+                config.machines.length === 0
+                  ? "bg-red-50 border-2 border-red-300"
+                  : "bg-white border border-gray-200"
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-lg ${
+                    config.machines.length === 0 ? "bg-red-100" : "bg-green-100"
+                  }`}
+                >
+                  <Monitor
+                    className={`w-4 h-4 ${
+                      config.machines.length === 0
+                        ? "text-red-600"
+                        : "text-green-600"
+                    }`}
+                  />
+                </div>
+                <div>
+                  <h4
+                    className={`font-semibold ${
+                      config.machines.length === 0
+                        ? "text-red-900"
+                        : "text-gray-900"
+                    }`}
+                  >
+                    Target Machines *
+                  </h4>
+                  <p
+                    className={`text-sm ${
+                      config.machines.length === 0
+                        ? "text-red-700"
+                        : "text-gray-600"
+                    }`}
+                  >
+                    Hardware platforms for execution
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <p
+                  className={`text-sm ${
+                    config.machines.length === 0
+                      ? "text-red-700"
+                      : "text-gray-600"
+                  }`}
+                >
                   Select which machines should run these kernels. At least one
                   machine must be selected.
                 </p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-4 gap-3">
                   {AVAILABLE_MACHINES.map((machine) => (
                     <label
                       key={machine}
-                      className="flex items-center space-x-2"
+                      className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer ${
+                        config.machines.length === 0
+                          ? "border-2 border-red-300 hover:bg-red-100"
+                          : "border border-gray-200 hover:bg-gray-50"
+                      }`}
                     >
                       <input
                         type="checkbox"
                         checked={config.machines.includes(machine)}
                         onChange={() => handleMachineToggle(machine)}
                         disabled={isSubmitting}
-                        className="rounded border-green-300 text-green-600 focus:ring-green-500"
+                        className={`rounded focus:ring-2 outline-0 ${
+                          config.machines.length === 0
+                            ? "border-red-300 text-red-600 focus:ring-red-500"
+                            : "border-gray-300 text-green-600 focus:ring-green-500"
+                        }`}
                       />
-                      <span className="text-sm font-medium text-green-800">
+                      <span
+                        className={`text-sm font-medium ${
+                          config.machines.length === 0
+                            ? "text-red-900"
+                            : "text-gray-900"
+                        }`}
+                      >
                         {machine}
                       </span>
                     </label>
                   ))}
                 </div>
-                <div className="text-xs text-green-600">
+                {config.machines.length === 0 && (
+                  <p className="text-sm text-red-600 font-medium">
+                    ⚠ Please select at least one machine
+                  </p>
+                )}
+                <div
+                  className={`text-sm px-3 py-2 rounded-lg ${
+                    config.machines.length === 0
+                      ? "text-red-700 bg-red-100"
+                      : "text-gray-600 bg-gray-50"
+                  }`}
+                >
                   Selected: {config.machines.length} of{" "}
                   {AVAILABLE_MACHINES.length} machines
                 </div>
@@ -175,17 +309,27 @@ export default function KernelConfirmationModal({
             </div>
 
             {/* Workflow Selection */}
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-              <h4 className="font-medium text-purple-900 mb-3">
-                Workflow Configuration *
-              </h4>
-              <div className="space-y-3">
-                <p className="text-sm text-purple-700">
+            <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center justify-center w-8 h-8 bg-purple-100 rounded-lg">
+                  <Settings className="w-4 h-4 text-purple-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">
+                    Workflow Configuration *
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    Execution scheduling preferences
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
                   Choose when these kernels should be executed in the
                   benchmarking workflows.
                 </p>
-                <div className="space-y-2">
-                  <label className="flex items-start space-x-2">
+                <div className="space-y-3">
+                  <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
                     <input
                       type="radio"
                       name="workflow"
@@ -198,18 +342,18 @@ export default function KernelConfirmationModal({
                         }))
                       }
                       disabled={isSubmitting}
-                      className="mt-0.5 border-purple-300 text-purple-600 focus:ring-purple-500"
+                      className="mt-0.5 border-gray-300 text-purple-600 focus:ring-purple-500"
                     />
                     <div>
-                      <span className="text-sm font-medium text-purple-800">
+                      <span className="text-sm font-medium text-gray-900">
                         Never run (Disabled)
                       </span>
-                      <p className="text-xs text-purple-600">
+                      <p className="text-xs text-gray-600">
                         Kernels will be stored but not executed in any workflows
                       </p>
                     </div>
                   </label>
-                  <label className="flex items-start space-x-2">
+                  <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
                     <input
                       type="radio"
                       name="workflow"
@@ -222,19 +366,19 @@ export default function KernelConfirmationModal({
                         }))
                       }
                       disabled={isSubmitting}
-                      className="mt-0.5 border-purple-300 text-purple-600 focus:ring-purple-500"
+                      className="mt-0.5 border-gray-300 text-purple-600 focus:ring-purple-500"
                     />
                     <div>
-                      <span className="text-sm font-medium text-purple-800">
+                      <span className="text-sm font-medium text-gray-900">
                         End-to-end nightly only
                       </span>
-                      <p className="text-xs text-purple-600">
+                      <p className="text-xs text-gray-600">
                         Run only in comprehensive nightly workflows (slower,
                         thorough)
                       </p>
                     </div>
                   </label>
-                  <label className="flex items-start space-x-2">
+                  <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
                     <input
                       type="radio"
                       name="workflow"
@@ -250,12 +394,13 @@ export default function KernelConfirmationModal({
                       className="mt-0.5 border-purple-300 text-purple-600 focus:ring-purple-500"
                     />
                     <div>
-                      <span className="text-sm font-medium text-purple-800">
-                        Both workflows (Recommended)
+                      <span className="text-sm font-medium text-gray-900">
+                        Both workflows
                       </span>
-                      <p className="text-xs text-purple-600">
+                      <p className="text-xs text-gray-700">
                         Run in both quick benchmarks and nightly end-to-end
-                        workflows
+                        workflows. Quick benchmarks are run automatically upon
+                        each Wave pull request.
                       </p>
                     </div>
                   </label>
@@ -265,21 +410,35 @@ export default function KernelConfirmationModal({
           </div>
 
           {/* Kernels Review Section */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-3">
-              Review {kernels.length} Kernel{kernels.length !== 1 ? "s" : ""}{" "}
-              for {kernelType.displayName}
-            </h4>
+          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-lg">
+                <Check className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900">
+                  Review {kernels.length} Kernel
+                  {kernels.length !== 1 ? "s" : ""}
+                </h4>
+                <p className="text-sm text-gray-600">
+                  {kernelType.displayName} configuration
+                </p>
+              </div>
+            </div>
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {kernels.map((kernel, index) => (
                 <div
                   key={kernel.id}
-                  className="border border-gray-200 rounded-lg p-3 bg-white"
+                  className="border border-gray-200 rounded-lg p-4 bg-gray-50"
                 >
-                  <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                    Kernel {index + 1}
-                    <FaCheck className="text-green-500 text-sm" />
-                  </h4>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center justify-center w-6 h-6 bg-green-100 rounded-full">
+                      <Check className="w-3 h-3 text-green-600" />
+                    </div>
+                    <h5 className="font-medium text-gray-900">
+                      Kernel {index + 1}
+                    </h5>
+                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {kernelType.attributes.map((attribute) => {
@@ -289,7 +448,7 @@ export default function KernelConfirmationModal({
                       return (
                         <div
                           key={attribute.name}
-                          className="bg-gray-50 p-2 rounded border"
+                          className="bg-white p-3 rounded-lg border border-gray-200"
                         >
                           <div className="flex justify-between items-start">
                             <div>
@@ -302,7 +461,7 @@ export default function KernelConfirmationModal({
                                 </span>
                               )}
                             </div>
-                            <span className="text-sm text-gray-900 font-mono bg-white px-2 py-1 rounded">
+                            <span className="text-sm text-gray-900 font-mono bg-gray-50 px-2 py-1 rounded">
                               {displayValue || (
                                 <em className="text-gray-400">empty</em>
                               )}
@@ -316,9 +475,11 @@ export default function KernelConfirmationModal({
               ))}
             </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-start gap-2">
-                <FaExclamationTriangle className="text-yellow-600 mt-0.5" />
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
+              <div className="flex items-start gap-3">
+                <div className="flex items-center justify-center w-6 h-6 bg-yellow-100 rounded-full">
+                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                </div>
                 <div>
                   <h4 className="font-medium text-yellow-900">
                     Important Note
@@ -339,24 +500,24 @@ export default function KernelConfirmationModal({
         <button
           onClick={handleClose}
           disabled={isSubmitting}
-          className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2"
+          className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2 font-medium"
         >
-          <FaTimes />
+          <X className="w-4 h-4" />
           Cancel
         </button>
         <button
           onClick={handleConfirm}
           disabled={isSubmitting || !isFormValid}
-          className="px-6 py-2 text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-2"
+          className="px-6 py-2 text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-2 font-medium"
         >
           {isSubmitting ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <Loader2 className="w-4 h-4 animate-spin" />
               Adding Kernels...
             </>
           ) : (
             <>
-              <FaCheck />
+              <Check className="w-4 h-4" />
               Add {kernels.length} Kernel{kernels.length !== 1 ? "s" : ""}
             </>
           )}
