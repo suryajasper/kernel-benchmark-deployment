@@ -1,11 +1,6 @@
 import { twMerge } from "tailwind-merge";
-import type {
-  BenchmarkJobStep,
-  BenchmarkRun,
-  RepoPullRequest,
-} from "../types";
+import type { BenchmarkJobStep, BenchmarkRun, RepoPullRequest } from "../types";
 import { toTitleCase } from "../utils/utils";
-import ChangeStatBar from "./ChangeStatBar";
 import { BarLoader } from "react-spinners";
 import { useState } from "react";
 import { cancelWorkflow, triggerWorkflow } from "../utils/github";

@@ -1,5 +1,377 @@
+import { useState, useEffect } from "react";
 import PageContainer from "../components/PageContainer";
+import KernelTypeDisplay from "../components/KernelTypes/KernelTypeDisplay";
+import KernelTypeForm from "../components/KernelTypes/KernelTypeForm";
+import DeleteKernelTypeModal from "../components/KernelTypes/DeleteKernelTypeModal";
+import UserFriendlyKernelForm from "../components/KernelForm/UserFriendlyKernelForm";
+import EngineerFriendlyKernelForm from "../components/KernelForm/EngineerFriendlyKernelForm";
+import KernelConfirmationModal from "../components/KernelForm/KernelConfirmationModal";
+import ViewToggle from "../components/KernelForm/ViewToggle";
+import type { ViewMode } from "../components/KernelForm/ViewToggle";
+import { useModal } from "../contexts/useModal";
+import type { KernelTypeDefinition, KernelRuntimeConfig } from "../types";
+import {
+  DEFAULT_KERNEL_TYPES,
+  createKernelType,
+  validateKernelTypeData,
+} from "../utils/kernelTypes";
+import {
+  fetchKernelTypes,
+  addKernelType,
+  updateKernelType,
+  deleteKernelType,
+  addKernels,
+} from "../utils/github";
+
+interface KernelData {
+  id: string;
+  values: Record<string, string | boolean>;
+  isValid: boolean;
+  errors: Record<string, string>;
+}
 
 export default function AddKernels() {
-  return <PageContainer activePage="new">Add Kernels</PageContainer>;
+  const [kernelTypes, setKernelTypes] = useState<KernelTypeDefinition[]>([]);
+  const [selectedKernelType, setSelectedKernelType] =
+    useState<KernelTypeDefinition | null>(null);
+  const [pendingKernels, setPendingKernels] = useState<KernelData[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>("user-friendly");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [kernelTypeToEdit, setKernelTypeToEdit] =
+    useState<KernelTypeDefinition | null>(null);
+  const [kernelTypeToDelete, setKernelTypeToDelete] =
+    useState<KernelTypeDefinition | null>(null);
+
+  const kernelTypeModal = useModal();
+  const deleteTypeModal = useModal();
+  const confirmationModal = useModal();
+
+  // Load kernel types from backend on component mount
+  useEffect(() => {
+    const loadKernelTypes = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const backendKernelTypes = await fetchKernelTypes();
+        setKernelTypes(backendKernelTypes);
+      } catch (err) {
+        console.warn(
+          "Failed to load kernel types from backend, using defaults:",
+          err
+        );
+        // Fallback to default kernel types if backend fails
+        setKernelTypes(DEFAULT_KERNEL_TYPES);
+        setError(
+          "Failed to load kernel types from backend. Using default types."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadKernelTypes();
+  }, []);
+
+  const handleCreateKernelType = async (
+    data: Omit<KernelTypeDefinition, "_id">
+  ) => {
+    const validation = validateKernelTypeData(data);
+
+    if (!validation.isValid) {
+      alert(`Validation errors:\n${validation.errors.join("\n")}`);
+      return;
+    }
+
+    // Check if name already exists
+    const existingType = kernelTypes.find((kt) => kt.name === data.name);
+    if (existingType) {
+      alert(`A kernel type with the name "${data.name}" already exists.`);
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+
+      // Create the kernel type with ID
+      const kernelTypeToCreate = createKernelType(data);
+
+      // Save to backend
+      const createdKernelType = await addKernelType(kernelTypeToCreate);
+
+      // Update local state
+      setKernelTypes((prev) => [...prev, createdKernelType]);
+      setSelectedKernelType(createdKernelType);
+      kernelTypeModal.close();
+      setKernelTypeToEdit(null);
+
+      alert(
+        `Successfully created kernel type "${createdKernelType.displayName}"!`
+      );
+    } catch (err) {
+      console.error("Failed to create kernel type:", err);
+      alert(
+        `Failed to create kernel type: ${err instanceof Error ? err.message : String(err)}`
+      );
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleSelectKernelType = (kernelType: KernelTypeDefinition) => {
+    setSelectedKernelType(kernelType);
+  };
+
+  const handleEditKernelType = (kernelType: KernelTypeDefinition) => {
+    setKernelTypeToEdit(kernelType);
+    kernelTypeModal.open();
+  };
+
+  const handleKernelTypeSubmit = async (
+    kernelTypeData: KernelTypeDefinition | Omit<KernelTypeDefinition, "_id">
+  ) => {
+    if ("_id" in kernelTypeData) {
+      // Edit mode
+      await handleUpdateKernelType(kernelTypeData);
+    } else {
+      // Create mode
+      await handleCreateKernelType(kernelTypeData);
+    }
+  };
+
+  const handleUpdateKernelType = async (
+    updatedKernelType: KernelTypeDefinition
+  ) => {
+    try {
+      setIsUpdating(true);
+
+      // Update in backend
+      const result = await updateKernelType(updatedKernelType._id, {
+        name: updatedKernelType.name,
+        displayName: updatedKernelType.displayName,
+        description: updatedKernelType.description,
+        attributes: updatedKernelType.attributes,
+      });
+
+      // Update local state
+      setKernelTypes((prev) =>
+        prev.map((kt) => (kt._id === updatedKernelType._id ? result : kt))
+      );
+
+      // Update selected kernel type if it's the one being edited
+      if (selectedKernelType?._id === updatedKernelType._id) {
+        setSelectedKernelType(result);
+      }
+
+      kernelTypeModal.close();
+      setKernelTypeToEdit(null);
+
+      alert(`Successfully updated kernel type "${result.displayName}"!`);
+    } catch (err) {
+      console.error("Failed to update kernel type:", err);
+      alert(
+        `Failed to update kernel type: ${err instanceof Error ? err.message : String(err)}`
+      );
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteKernelType = (kernelType: KernelTypeDefinition) => {
+    setKernelTypeToDelete(kernelType);
+    deleteTypeModal.open();
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!kernelTypeToDelete) return;
+
+    try {
+      setIsDeleting(true);
+
+      // Delete from backend
+      await deleteKernelType(kernelTypeToDelete._id);
+
+      // Update local state
+      setKernelTypes((prev) =>
+        prev.filter((kt) => kt._id !== kernelTypeToDelete._id)
+      );
+
+      // Clear selection if the deleted type was selected
+      if (selectedKernelType?._id === kernelTypeToDelete._id) {
+        setSelectedKernelType(null);
+      }
+
+      deleteTypeModal.close();
+      setKernelTypeToDelete(null);
+
+      alert(
+        `Successfully deleted kernel type "${kernelTypeToDelete.displayName}"!`
+      );
+    } catch (err) {
+      console.error("Failed to delete kernel type:", err);
+      alert(
+        `Failed to delete kernel type: ${err instanceof Error ? err.message : String(err)}`
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleKernelSubmit = (kernels: KernelData[]) => {
+    setPendingKernels(kernels);
+    confirmationModal.open();
+  };
+
+  const handleConfirmKernels = async (config: KernelRuntimeConfig) => {
+    if (!selectedKernelType) {
+      alert("No kernel type selected!");
+      return;
+    }
+
+    try {
+      // Transform pending kernels to match backend API format
+      const kernelsToAdd = pendingKernels.map((kernel) => ({
+        name: kernel.id,
+        kernelType: selectedKernelType.name,
+        tag: config.tag,
+        machines: config.machines,
+        workflow: config.workflow,
+        problem: kernel.values, // The kernel's attribute values become the problem object
+      }));
+
+      console.log("Adding kernels:", kernelsToAdd);
+
+      // Submit to backend
+      await addKernels(kernelsToAdd);
+
+      // Show success message
+      alert(
+        `Successfully added ${pendingKernels.length} kernel(s) with tag "${config.tag}" for machines [${config.machines.join(", ")}] and workflow "${config.workflow}" to the dashboard!`
+      );
+
+      // Reset pending kernels and close modal
+      setPendingKernels([]);
+      confirmationModal.close();
+    } catch (err) {
+      console.error("Failed to add kernels:", err);
+      alert(
+        `Failed to add kernels: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
+  };
+
+  return (
+    <PageContainer activePage="new">
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold mb-2">Add New Kernels</h1>
+          <p className="text-gray-600">
+            Select an existing kernel type or create a new one to add kernels
+            for benchmarking.
+          </p>
+        </div>
+
+        {error && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <div className="text-yellow-800">
+                <strong>Warning:</strong> {error}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading kernel types...</p>
+            </div>
+          </div>
+        ) : (
+          <KernelTypeDisplay
+            kernelTypes={kernelTypes}
+            selectedKernelType={selectedKernelType}
+            onSelectKernelType={handleSelectKernelType}
+            onCreateNewType={() => {
+              setKernelTypeToEdit(null);
+              kernelTypeModal.open();
+            }}
+            onEditKernelType={handleEditKernelType}
+            onDeleteKernelType={handleDeleteKernelType}
+          />
+        )}
+
+        {selectedKernelType && (
+          <div className="mt-8 p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold">
+                Add Kernels for {selectedKernelType.displayName}
+              </h2>
+              <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
+            </div>
+
+            {viewMode === "user-friendly" ? (
+              <UserFriendlyKernelForm
+                kernelType={selectedKernelType}
+                onSubmit={handleKernelSubmit}
+              />
+            ) : (
+              <EngineerFriendlyKernelForm
+                kernelType={selectedKernelType}
+                onSubmit={handleKernelSubmit}
+              />
+            )}
+          </div>
+        )}
+
+        {!selectedKernelType && (
+          <div className="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-lg text-center">
+            <h2 className="text-xl font-semibold mb-2 text-gray-600">
+              No Kernel Type Selected
+            </h2>
+            <p className="text-gray-500">
+              Please select a kernel type above to start adding kernels, or
+              create a new kernel type.
+            </p>
+          </div>
+        )}
+
+        <KernelTypeForm
+          isOpen={kernelTypeModal.isOpen}
+          onClose={() => {
+            kernelTypeModal.close();
+            setKernelTypeToEdit(null);
+          }}
+          onSubmit={handleKernelTypeSubmit}
+          kernelType={kernelTypeToEdit}
+          isLoading={isCreating || isUpdating}
+        />
+
+        <DeleteKernelTypeModal
+          isOpen={deleteTypeModal.isOpen}
+          onClose={() => {
+            deleteTypeModal.close();
+            setKernelTypeToDelete(null);
+          }}
+          onConfirm={handleConfirmDelete}
+          kernelType={kernelTypeToDelete}
+          isLoading={isDeleting}
+        />
+
+        {selectedKernelType && (
+          <KernelConfirmationModal
+            isOpen={confirmationModal.isOpen}
+            onClose={confirmationModal.close}
+            onConfirm={handleConfirmKernels}
+            kernelType={selectedKernelType}
+            kernels={pendingKernels}
+          />
+        )}
+      </div>
+    </PageContainer>
+  );
 }

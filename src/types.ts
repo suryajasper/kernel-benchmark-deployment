@@ -1,6 +1,23 @@
 /* Kernels */
 
 export type KernelType = "gemm" | "attention" | "conv";
+export type WorkflowType = "none" | "e2e" | "all";
+
+// Available machines for kernel execution
+export const AVAILABLE_MACHINES = [
+  "mi300x",
+  "mi325x",
+  "mi350x",
+  "mi355x",
+] as const;
+export type MachineType = (typeof AVAILABLE_MACHINES)[number];
+
+// Runtime configuration for kernels
+export interface KernelRuntimeConfig {
+  tag: string;
+  workflow: WorkflowType;
+  machines: string[];
+}
 
 export interface Kernel {
   id: string;
@@ -19,14 +36,52 @@ export interface Kernel {
 }
 
 export interface KernelConfig {
-  id: string;
-  kernelType: string;
+  _id: string;
   name: string;
+  kernelType: string;
+  machines: string[];
+  workflow: string;
   tag: string;
-  dtype: string;
-  allowedBackends: string[];
   problem: Record<string, any>;
-  tunedConfig?: Record<string, any>;
+}
+
+// Backend API types for kernel submission
+export interface BackendKernelConfig {
+  _id: string;
+  name: string;
+  kernelType: string;
+  tag: string;
+  machines: string[];
+  workflow: WorkflowType;
+  problem: Record<string, any>;
+}
+
+/* Kernel Type Definitions */
+
+export type AttributeType = "integer" | "float" | "string" | "boolean";
+
+export interface AttributeConstraints {
+  // For numeric types (integer, float)
+  min?: number;
+  max?: number;
+  // For string types
+  choices?: string[];
+}
+
+export interface KernelTypeAttribute {
+  name: string;
+  type: AttributeType;
+  required: boolean;
+  constraints?: AttributeConstraints;
+  description?: string;
+}
+
+export interface KernelTypeDefinition {
+  _id: string;
+  name: string;
+  displayName: string;
+  description?: string;
+  attributes: KernelTypeAttribute[];
 }
 
 /* Source Control */
@@ -125,6 +180,12 @@ export interface TuningConfig {
 }
 
 export type TuningResults = Record<string, TuningConfig[]>;
+
+export interface KernelRuntimeConfig {
+  tag: string;
+  workflow: "none" | "e2e" | "all";
+  machines: string[];
+}
 
 export interface BenchmarkWorkflowProps {
   githubUrl: string;

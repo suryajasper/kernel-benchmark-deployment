@@ -11,12 +11,8 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
   className = "",
 }) => {
   return (
-    <div
-      className={`px-6 py-4 border-b border-gray-200 dark:border-gray-700 ${className}`}
-    >
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-        {children}
-      </h3>
+    <div className={`px-6 py-4 border-b border-gray-200 ${className}`}>
+      <h3 className="text-xl font-semibold text-gray-900 pr-8">{children}</h3>
     </div>
   );
 };
@@ -44,7 +40,7 @@ export const ModalFooter: React.FC<ModalFooterProps> = ({
 }) => {
   return (
     <div
-      className={`px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3 ${className}`}
+      className={`px-6 py-4 border-t border-gray-200 flex justify-end gap-3 ${className}`}
     >
       {children}
     </div>

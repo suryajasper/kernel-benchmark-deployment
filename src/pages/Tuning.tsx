@@ -43,9 +43,7 @@ export default function Tuning() {
     return kernels.filter(
       (k) =>
         matchQuery(k) &&
-        k.allowedBackends.filter((backend) => backend.startsWith("wave"))
-          .length > 0 &&
-        selectedDtypes.includes(k.dtype) &&
+        selectedDtypes.includes(k.problem.dtype) &&
         selectedTags.includes(k.tag) &&
         selectedKernelTypes.includes(k.kernelType as KernelType) &&
         ((tuningResults[k.name] && selectedTuning.includes("tuned")) ||
@@ -61,7 +59,9 @@ export default function Tuning() {
   ]);
 
   const getUnique = (fromKernels: KernelConfig[]) => {
-    const uniqueDtypes = Array.from(new Set(fromKernels.map((k) => k.dtype)));
+    const uniqueDtypes = Array.from(
+      new Set(fromKernels.map((k) => k.problem.dtype))
+    );
     const uniqueTags = Array.from(new Set(fromKernels.map((k) => k.tag)));
     return { uniqueDtypes, uniqueTags };
   };

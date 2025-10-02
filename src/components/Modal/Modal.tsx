@@ -57,8 +57,8 @@ const Modal: React.FC<ModalProps> = ({
   const sizeClasses = {
     sm: "max-w-sm",
     md: "max-w-md",
-    lg: "max-w-lg",
-    xl: "max-w-xl",
+    lg: "max-w-2xl",
+    xl: "max-w-4xl",
     full: "max-w-full mx-4",
   };
 
@@ -80,21 +80,21 @@ const Modal: React.FC<ModalProps> = ({
       onClick={closeOnOverlayClick ? onClose : undefined}
     >
       {/* Overlay */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="fixed inset-0 bg-black/50" />
 
       {/* Modal Content */}
       <div
         className={`relative w-full ${sizeClasses[size]} ${animationClasses[animation]} ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+        <div className="relative bg-white rounded-lg shadow-md border border-gray-200">
           {showCloseButton && (
             <button
               onClick={onClose}
-              className="absolute right-4 top-4 p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="absolute right-3 top-3 p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors z-10"
               aria-label="Close modal"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           )}
           {children}

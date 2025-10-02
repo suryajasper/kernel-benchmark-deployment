@@ -21,7 +21,7 @@ export default function KernelList({
   const allSelected =
     toggleKernels &&
     activeKernels &&
-    kernels.every((k) => activeKernels.has(k.id));
+    kernels.every((k) => activeKernels.has(k._id));
 
   const handleToggle = (id: string, state: boolean) => {
     if (toggleKernels) {
@@ -41,8 +41,8 @@ export default function KernelList({
     const start = Math.min(selectStart, index);
     const end = Math.max(selectStart, index) + 1;
     toggleKernels(
-      kernels.slice(start, end).map((k) => k.id),
-      !activeKernels.has(kernels[selectStart].id)
+      kernels.slice(start, end).map((k) => k._id),
+      !activeKernels.has(kernels[selectStart]._id)
     );
     setSelectStart(undefined);
   };
@@ -59,7 +59,7 @@ export default function KernelList({
           )}
           onClick={() => {
             toggleKernels(
-              kernels.map((k) => k.id),
+              kernels.map((k) => k._id),
               !allSelected
             );
           }}
@@ -69,11 +69,11 @@ export default function KernelList({
       )}
       {kernels.map((kernel, index) => (
         <KernelListItem
-          key={kernel.id}
+          key={kernel._id}
           kernel={kernel}
           index={index}
           tuningResults={tuningResults[kernel.name]}
-          isActive={activeKernels?.has(kernel.id)}
+          isActive={activeKernels?.has(kernel._id)}
           onToggle={toggleKernels ? handleToggle : undefined}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}

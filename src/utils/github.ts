@@ -2,7 +2,9 @@ import type {
   RepoPullRequest,
   BenchmarkRun,
   KernelConfig,
+  BackendKernelConfig,
   TuningResults,
+  KernelTypeDefinition,
 } from "../types";
 
 export async function fetchModifications() {
@@ -151,5 +153,133 @@ export async function triggerTuningWorkflow(kernelIds: string[]) {
   if (!response.ok) {
     console.log(response.statusText);
     throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+}
+
+// Kernel Type Management Functions
+
+export async function fetchKernelTypes(): Promise<KernelTypeDefinition[]> {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_SERVER_URL}/kernel_types`
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const kernelTypes: KernelTypeDefinition[] = await response.json();
+    return kernelTypes;
+  } catch (error) {
+    throw new Error(`Failed to fetch kernel types: ${error}`);
+  }
+}
+
+export async function addKernelType(
+  kernelType: KernelTypeDefinition
+): Promise<KernelTypeDefinition> {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_SERVER_URL}/kernel_types`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(kernelType),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.error || `HTTP error! Status: ${response.status}`
+      );
+    }
+
+    const createdKernelType: KernelTypeDefinition = await response.json();
+    return createdKernelType;
+  } catch (error) {
+    throw new Error(`Failed to add kernel type: ${error}`);
+  }
+}
+
+export async function updateKernelType(
+  kernelTypeId: string,
+  updates: Partial<Omit<KernelTypeDefinition, "_id">>
+): Promise<KernelTypeDefinition> {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_SERVER_URL}/kernel_types/${kernelTypeId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.error || `HTTP error! Status: ${response.status}`
+      );
+    }
+
+    const updatedKernelType: KernelTypeDefinition = await response.json();
+    return updatedKernelType;
+  } catch (error) {
+    throw new Error(`Failed to update kernel type: ${error}`);
+  }
+}
+
+export async function deleteKernelType(kernelTypeId: string): Promise<void> {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_SERVER_URL}/kernel_types/${kernelTypeId}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.error || `HTTP error! Status: ${response.status}`
+      );
+    }
+  } catch (error) {
+    throw new Error(`Failed to delete kernel type: ${error}`);
+  }
+}
+
+// Kernel Management Functions
+
+export async function addKernels(
+  kernelConfigs: Omit<BackendKernelConfig, "_id">[]
+): Promise<BackendKernelConfig[]> {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_SERVER_URL}/kernels`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(kernelConfigs),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.error || `HTTP error! Status: ${response.status}`
+      );
+    }
+
+    const createdKernels: BackendKernelConfig[] = await response.json();
+    return createdKernels;
+  } catch (error) {
+    throw new Error(`Failed to add kernels: ${error}`);
   }
 }

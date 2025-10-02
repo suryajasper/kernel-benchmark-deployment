@@ -110,7 +110,7 @@ export function KernelListItem({
     if (hasTuningConfigs) {
       setIsExpanded(!isExpanded);
     } else if (onToggle) {
-      onToggle(kernel.id, !isActive);
+      onToggle(kernel._id, !isActive);
     }
   };
 
@@ -142,7 +142,7 @@ export function KernelListItem({
               type="checkbox"
               className="accent-green-500"
               checked={isActive}
-              onChange={() => onToggle(kernel.id, !isActive)}
+              onChange={() => onToggle(kernel._id, !isActive)}
               onClick={(e) => e.stopPropagation()}
             />
           )}
@@ -166,7 +166,6 @@ export function KernelListItem({
           )}
           <ItemTag label={toTitleCase(kernel.kernelType)} />
           <ItemTag label={kernel.tag} />
-          <ItemTag label={kernel.allowedBackends.join(", ")} />
           <>
             {Object.entries(kernel.problem).map(([dimName, dimValue]) => (
               <ItemTag
@@ -176,6 +175,7 @@ export function KernelListItem({
               />
             ))}
           </>
+          <ItemTag label={`Workflow = ${kernel.workflow}`} />
         </div>
         <div>Last tuned: {lastTuned}</div>
       </div>
