@@ -3,7 +3,7 @@ import { useEffect, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import type { PageName } from "./Navbar";
 import Navbar from "./Navbar";
-import { ClockLoader } from "react-spinners";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface PageContainerProps {
@@ -35,8 +35,11 @@ export default function PageContainer({
       <Navbar activePage={activePage} />
       <div className="px-12 pt-24 pb-6">
         {isLoading ? (
-          <div className="w-[100%] h-[100%] flex justify-center content-center">
-            <ClockLoader size={150} />
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+              <p className="text-gray-600 text-lg font-medium">Loading...</p>
+            </div>
           </div>
         ) : (
           children
