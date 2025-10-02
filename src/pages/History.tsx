@@ -10,6 +10,7 @@ import {
 import ModificationView, {
   PerformanceView,
 } from "../components/ModificationView";
+import { RefreshCw } from "lucide-react";
 // import { generateFakeRepoHistory } from "../utils/history";
 
 export default function History() {
@@ -31,8 +32,7 @@ export default function History() {
       fetchRuns().then((runArr) => {
         const newRuns: Record<string, BenchmarkRun> = {};
         for (let run of runArr) {
-          if (!run.mappingId)
-            continue;
+          if (!run.mappingId) continue;
           const existingRun = newRuns[run.mappingId];
           if (!existingRun || run.timestamp > existingRun.timestamp) {
             if (
@@ -83,41 +83,86 @@ export default function History() {
 
   return (
     <PageContainer activePage="history" isLoading={modifications === undefined}>
-      <div className="px-24">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-row items-center justify-center w-full">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="space-y-8">
+          {/* Header Section */}
+          <div className="flex flex-col items-center gap-6">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                Repository History
+              </h1>
+              <p className="text-gray-600">
+                Track pull requests, performance runs, and repository changes
+              </p>
+            </div>
+
             <button
               disabled={rebaseWaiting}
-              className="px-4 py-2 w-40 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg shadow-sm transition-all duration-200"
               onClick={triggerRebase}
             >
-              {rebaseWaiting ? "Rebasing..." : "Rebase"}
+              <RefreshCw
+                className={`w-4 h-4 ${rebaseWaiting ? "animate-spin" : ""}`}
+              />
+              {rebaseWaiting ? "Rebasing..." : "Rebase Repository"}
             </button>
           </div>
 
+          {/* Timeline Section */}
+          <div className="space-y-6">
+            {modifications &&
+              performances &&
+              [
+                ...modifications.filter((mod) => mod.type === "pr"),
+                ...performances,
+              ]
+                .sort(
+                  (a, b) =>
+                    new Date(b.timestamp).getTime() -
+                    new Date(a.timestamp).getTime()
+                )
+                .map((item, index) => {
+                  if ("type" in item && item.type === "pr") {
+                    return (
+                      <div key={`pr-${index}`} className="relative">
+                        <ModificationView
+                          pr={item as RepoPullRequest}
+                          runs={runs}
+                        />
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div key={`perf-${index}`} className="relative">
+                        <PerformanceView perf={item as BenchmarkRun} />
+                      </div>
+                    );
+                  }
+                })}
+          </div>
+
+          {/* Empty State */}
           {modifications &&
             performances &&
             [
               ...modifications.filter((mod) => mod.type === "pr"),
               ...performances,
-            ]
-              .sort(
-                (a, b) =>
-                  new Date(b.timestamp).getTime() -
-                  new Date(a.timestamp).getTime()
-              )
-              .map((item) => {
-                if ("type" in item && item.type === "pr") {
-                  return (
-                    <ModificationView
-                      pr={item as RepoPullRequest}
-                      runs={runs}
-                    />
-                  );
-                } else {
-                  return <PerformanceView perf={item as BenchmarkRun} />;
-                }
-              })}
+            ].length === 0 && (
+              <div className="text-center py-16">
+                <div className="bg-gray-50 rounded-lg p-12 max-w-md mx-auto">
+                  <div className="text-gray-400 mb-4">
+                    <RefreshCw className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No History Available
+                  </h3>
+                  <p className="text-gray-600">
+                    No pull requests or performance runs found. Try rebasing to
+                    refresh the data.
+                  </p>
+                </div>
+              </div>
+            )}
         </div>
       </div>
     </PageContainer>

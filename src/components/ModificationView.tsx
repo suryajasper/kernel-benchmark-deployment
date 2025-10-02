@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import type { RepoPullRequest, BenchmarkRun } from "../types";
-import { FaCodePullRequest, FaCodeMerge, FaGithub } from "react-icons/fa6";
-import { MdOutlineSpeed } from "react-icons/md";
-import { SlGraph } from "react-icons/sl";
-import { MdOutlineExpandLess, MdOutlineExpandMore } from "react-icons/md";
+import {
+  GitPullRequest,
+  GitMerge,
+  Github,
+  Zap,
+  BarChart3,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+} from "lucide-react";
 import { getTimeStringRelative } from "../utils/utils";
 import RunStatus, { ChangeStatView } from "../components/RunStatus";
 
@@ -28,11 +34,7 @@ export default function ModificationView({ pr, runs }: ModificationViewProps) {
     <div
       id={pr._id}
       key={pr._id}
-      className={`p-4 rounded-md shadow-md hover:shadow-lg transition ${
-        isMerge
-          ? "bg-purple-50 hover:bg-purple-100"
-          : "bg-green-50 hover:bg-green-100"
-      } cursor-pointer`}
+      className="relative bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onClick={() => {
@@ -43,62 +45,82 @@ export default function ModificationView({ pr, runs }: ModificationViewProps) {
         }
       }}
     >
-      <div className="flex justify-between items-start gap-4">
-        {/* Icon */}
-        <div className="mt-1">
-          {isMerge ? (
-            <FaCodeMerge className="text-purple-700 text-xl" />
-          ) : (
-            <FaCodePullRequest className="text-green-700 text-xl" />
-          )}
-        </div>
+      {/* Status indicator bar */}
+      <div
+        className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${
+          isMerge ? "bg-purple-500" : "bg-green-500"
+        }`}
+      />
 
-        {/* Title + Author */}
-        <div className="flex flex-col">
+      <div className="p-6">
+        <div className="flex items-start gap-4">
+          {/* Icon with background */}
           <div
-            className={`text-lg font-semibold ${isMerge ? "text-purple-800" : "text-green-800"}`}
+            className={`flex-shrink-0 p-2 rounded-lg ${
+              isMerge ? "bg-purple-100" : "bg-green-100"
+            }`}
           >
-            {title}
+            {isMerge ? (
+              <GitMerge className="w-5 h-5 text-purple-600" />
+            ) : (
+              <GitPullRequest className="w-5 h-5 text-green-600" />
+            )}
           </div>
 
-          <div className="flex items-center gap-2 mt-4">
-            <img
-              src={pr.author.profileUrl}
-              alt={pr.author.name}
-              className="w-6 h-6 rounded-full"
-            />
-            <span className="text-sm text-gray-700">{pr.author.name}</span>
-            <div className="text-sm ml-6">
-              {getTimeStringRelative(pr.timestamp)}
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            {/* Title */}
+            <h3 className="text-lg font-semibold text-gray-900 mb-3 leading-tight">
+              {title}
+            </h3>
+
+            {/* Author and timestamp */}
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <img
+                  src={pr.author.profileUrl}
+                  alt={pr.author.name}
+                  className="w-5 h-5 rounded-full ring-2 ring-white shadow-sm"
+                />
+                <span className="font-medium">{pr.author.name}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                <span>{getTimeStringRelative(pr.timestamp)}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Change Stats */}
-        <RunStatus run={run} pr={pr} />
+          {/* Status */}
+          <div className="flex-shrink-0">
+            <RunStatus run={run} pr={pr} />
+          </div>
+        </div>
       </div>
 
       {/* Expandable PR Description */}
       {isExpanded && pr.description && (
-        <div className="mt-4 text-sm text-gray-800 whitespace-pre-line">
-          {pr.description}
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="text-sm text-gray-700 whitespace-pre-line leading-relaxed bg-gray-50 p-4 rounded-lg">
+            {pr.description}
+          </div>
         </div>
       )}
 
       {/* Hover Menu */}
       {isHovering && (
-        <div className="absolute flex flex-row bg-gray-50 left-1/2 px-2 py-1 rounded-md shadow-sm justify-between gap-4">
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10">
           <a
             href={pr.url}
-            className="rounded-full hover:bg-gray-200"
+            className="p-2 rounded-md hover:bg-gray-100 transition-colors"
             title="View on GitHub"
             onClick={(e) => e.stopPropagation()}
           >
-            <FaGithub className="text-md text-gray-700 hover:text-black" />
+            <Github className="w-4 h-4 text-gray-600 hover:text-gray-900" />
           </a>
           {pr.description && (
-            <div
-              className="rounded-full hover:bg-gray-200"
+            <button
+              className="p-2 rounded-md hover:bg-gray-100 transition-colors"
               onClick={(e) => {
                 setExpanded(!isExpanded);
                 e.stopPropagation();
@@ -106,20 +128,20 @@ export default function ModificationView({ pr, runs }: ModificationViewProps) {
               title={isExpanded ? "Collapse" : "Expand"}
             >
               {isExpanded ? (
-                <MdOutlineExpandLess className="text-md text-gray-700 hover:text-black" />
+                <ChevronUp className="w-4 h-4 text-gray-600 hover:text-gray-900" />
               ) : (
-                <MdOutlineExpandMore className="text-md text-gray-700 hover:text-black" />
+                <ChevronDown className="w-4 h-4 text-gray-600 hover:text-gray-900" />
               )}
-            </div>
+            </button>
           )}
           {run && run.conclusion === "success" && (
             <Link
               to={`/dashboard/${run.blobName}`}
-              className="rounded-full hover:bg-gray-200"
+              className="p-2 rounded-md hover:bg-gray-100 transition-colors"
               title="View Dashboard Summary"
               onClick={(e) => e.stopPropagation()}
             >
-              <SlGraph className="text-md text-gray-700 hover:text-black" />
+              <BarChart3 className="w-4 h-4 text-gray-600 hover:text-gray-900" />
             </Link>
           )}
         </div>
@@ -135,38 +157,62 @@ interface PerformanceViewProps {
 export function PerformanceView({ perf }: PerformanceViewProps) {
   const navigate = useNavigate();
 
-  const title = "Full Benchmark " + new Date(perf.timestamp).toISOString();
+  const title = "Full Benchmark Run";
+  const formattedDate = new Date(perf.timestamp).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return (
     <div
       id={perf._id}
       key={perf._id}
-      className="p-4 rounded-md shadow-md hover:shadow-lg transition bg-blue-50 hover:bg-blue-100 cursor-pointer"
+      className="relative bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
       onClick={() => {
         navigate(`/dashboard/${perf.blobName}`, {
           preventScrollReset: true,
         });
       }}
     >
-      <div className="flex justify-between items-start gap-4">
-        {/* Icon */}
-        <div className="mt-1">
-          <MdOutlineSpeed className="text-blue-700 text-2xl" />
-        </div>
+      {/* Status indicator bar */}
+      <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-l-lg" />
 
-        {/* Title + Author */}
-        <div className="flex flex-col">
-          <div className="text-lg font-semibold text-blue-800">{title}</div>
+      <div className="p-6">
+        <div className="flex items-start gap-4">
+          {/* Icon with background */}
+          <div className="flex-shrink-0 p-2 bg-blue-100 rounded-lg">
+            <Zap className="w-5 h-5 text-blue-600" />
+          </div>
 
-          <div className="flex items-center gap-2 mt-4">
-            <div className="text-sm ml-6">
-              {getTimeStringRelative(perf.timestamp)}
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            {/* Title and badge */}
+            <div className="flex items-center gap-3 mb-3">
+              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                Automated
+              </span>
+            </div>
+
+            {/* Timestamp */}
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                <span>{getTimeStringRelative(perf.timestamp)}</span>
+              </div>
+              <span className="text-gray-400">•</span>
+              <span className="font-mono text-xs">{formattedDate}</span>
             </div>
           </div>
-        </div>
 
-        {/* Change Stats */}
-        <ChangeStatView run={perf} />
+          {/* Status */}
+          <div className="flex-shrink-0">
+            <ChangeStatView run={perf} />
+          </div>
+        </div>
       </div>
     </div>
   );

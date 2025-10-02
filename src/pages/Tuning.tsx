@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Play, Filter } from "lucide-react";
 import PageContainer from "../components/PageContainer";
 import type { KernelConfig, KernelType, TuningResults } from "../types";
 import {
@@ -12,7 +13,6 @@ import FilterControls from "../components/FilterControls";
 export default function Tuning() {
   const [kernels, setKernels] = useState<KernelConfig[]>([]);
   const [tuningResults, setTuningResults] = useState<TuningResults>({});
-  const [query, setQuery] = useState<string>("");
   const [selectedKernelTypes, setSelectedKernelTypes] = useState<KernelType[]>([
     "attention",
   ]);
@@ -29,20 +29,9 @@ export default function Tuning() {
     fetchTuningResults().then(setTuningResults);
   }, []);
 
-  const matchQuery = (kernel: KernelConfig) => {
-    if (query.length === 0) return true;
-    const name = kernel.name.toLowerCase();
-    const queries = query.toLowerCase().split(" ");
-    for (const queryStr of queries) {
-      if (name.includes(queryStr)) return true;
-    }
-    return false;
-  };
-
   const filteredKernels = useMemo(() => {
     return kernels.filter(
       (k) =>
-        matchQuery(k) &&
         selectedDtypes.includes(k.problem.dtype) &&
         selectedTags.includes(k.tag) &&
         selectedKernelTypes.includes(k.kernelType as KernelType) &&
@@ -55,7 +44,6 @@ export default function Tuning() {
     selectedDtypes,
     selectedTags,
     selectedTuning,
-    query,
   ]);
 
   const getUnique = (fromKernels: KernelConfig[]) => {
@@ -91,73 +79,102 @@ export default function Tuning() {
 
   return (
     <PageContainer activePage="tune" isLoading={kernels.length === 0}>
-      <div className="w-[100%] flex flex-col rounded-md">
-        <div className="w-[100%] pb-5 pl-10 flex flex-row justify-between">
-          <input
-            className="border-none flex-grow outline-none"
-            value={query}
-            placeholder="Enter Search Query"
-            onInput={(e) => setQuery(e.currentTarget.value)}
+      <div className="flex flex-col gap-6">
+        {/* Header Section */}
+        {tuningKernels.size > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                {tuningKernels.size} kernel{tuningKernels.size !== 1 ? "s" : ""}{" "}
+                selected for tuning
+              </div>
+              <button
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm font-medium"
+                onClick={() => {
+                  triggerTuningWorkflow(Array.from(tuningKernels));
+                }}
+              >
+                <Play className="w-4 h-4" />
+                Tune {tuningKernels.size} Kernel
+                {tuningKernels.size !== 1 ? "s" : ""}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Filters Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <Filter className="w-5 h-5 text-gray-500" />
+            <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
+          </div>
+
+          <FilterControls
+            filters={[
+              {
+                type: "multi",
+                props: {
+                  title: "Tuning Status",
+                  options: ["tuned", "untuned"],
+                  selectedOptions: selectedTuning,
+                  onInput: setSelectedTuning,
+                },
+              },
+              {
+                type: "multi",
+                props: {
+                  title: "Kernel Type",
+                  options: Array.from(
+                    new Set(kernels.map((k) => k.kernelType))
+                  ),
+                  selectedOptions: selectedKernelTypes,
+                  onInput: (kTypes: string[]) =>
+                    setSelectedKernelTypes(kTypes as KernelType[]),
+                },
+              },
+              {
+                type: "multi",
+                props: {
+                  title: "Data Types",
+                  options: uniqueDtypes,
+                  selectedOptions: selectedDtypes,
+                  onInput: setSelectedDtypes,
+                },
+              },
+              {
+                type: "multi",
+                props: {
+                  title: "Tags",
+                  options: uniqueTags,
+                  selectedOptions: selectedTags,
+                  onInput: setSelectedTags,
+                },
+              },
+            ]}
           />
-          {tuningKernels.size > 0 && (
-            <button
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              onClick={() => {
-                triggerTuningWorkflow(Array.from(tuningKernels));
-              }}
-            >
-              Tune {tuningKernels.size} Kernels
-            </button>
-          )}
         </div>
-        <FilterControls
-          filters={[
-            {
-              type: "multi",
-              props: {
-                title: "Tuned",
-                options: ["tuned", "untuned"],
-                selectedOptions: selectedTuning,
-                onInput: setSelectedTuning,
-              },
-            },
-            {
-              type: "multi",
-              props: {
-                title: "Kernel Type",
-                options: Array.from(new Set(kernels.map((k) => k.kernelType))),
-                selectedOptions: selectedKernelTypes,
-                onInput: (kTypes: string[]) =>
-                  setSelectedKernelTypes(kTypes as KernelType[]),
-              },
-            },
-            {
-              type: "multi",
-              props: {
-                title: "Data Types",
-                options: uniqueDtypes,
-                selectedOptions: selectedDtypes,
-                onInput: setSelectedDtypes,
-              },
-            },
-            {
-              type: "multi",
-              props: {
-                title: "Tags",
-                options: uniqueTags,
-                selectedOptions: selectedTags,
-                onInput: setSelectedTags,
-              },
-            },
-          ]}
-        />
+
+        {/* Results Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-800">
+              Kernels ({filteredKernels.length})
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Select kernels to tune or view their current tuning configurations
+            </p>
+          </div>
+
+          <div className="p-6">
+            <KernelList
+              tuningResults={tuningResults}
+              kernels={filteredKernels}
+              toggleKernels={toggleTuningKernels}
+              activeKernels={tuningKernels}
+            />
+          </div>
+        </div>
       </div>
-      <KernelList
-        tuningResults={tuningResults}
-        kernels={filteredKernels}
-        toggleKernels={toggleTuningKernels}
-        activeKernels={tuningKernels}
-      />
     </PageContainer>
   );
 }

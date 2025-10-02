@@ -1,9 +1,16 @@
-import { twMerge } from "tailwind-merge";
 import type { BenchmarkJobStep, BenchmarkRun, RepoPullRequest } from "../types";
 import { toTitleCase } from "../utils/utils";
 import { BarLoader } from "react-spinners";
 import { useState } from "react";
 import { cancelWorkflow, triggerWorkflow } from "../utils/github";
+import {
+  Clock,
+  Play,
+  XCircle,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 
 interface RunStatusContainerProps {
   children: React.ReactNode;
@@ -22,18 +29,13 @@ function RunStatusContainer({
   const hasActions = Object.keys(actions).length > 0;
 
   if (fill) {
-    let backgroundTint = "gray";
-
     return (
       <div
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className={twMerge(
-          `relative bg-${backgroundTint}-400/35`,
-          "h-25 w-80 ml-auto rounded-md border-2 border-gray-400 border-dashed"
-        )}
+        className="relative bg-white border border-gray-200 shadow-sm rounded-lg hover:shadow-md transition-shadow duration-200 h-25 w-80 ml-auto"
       >
-        <div className="w-full h-full flex flex-col gap-2 py-2 px-6 items-center justify-center">
+        <div className="w-full h-full flex flex-col gap-3 py-4 px-6 items-center justify-center">
           {children}
         </div>
 
@@ -41,7 +43,7 @@ function RunStatusContainer({
           <div
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
-            className="absolute top-0 left-0 w-full h-full bg-black/50 flex justify-center items-center gap-4 rounded-md z-10"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center gap-3 rounded-lg z-10"
           >
             {Object.entries(actions).map(([label, callback]) => (
               <button
@@ -52,8 +54,9 @@ function RunStatusContainer({
                     callback(run._id);
                   }
                 }}
-                className="bg-white text-black px-4 py-1 rounded shadow hover:bg-gray-100"
+                className="bg-white hover:bg-gray-50 text-gray-900 px-4 py-2 rounded-md shadow-sm border border-gray-200 font-medium transition-colors duration-200 flex items-center gap-2"
               >
+                <XCircle className="w-4 h-4" />
                 {label}
               </button>
             ))}
@@ -64,7 +67,7 @@ function RunStatusContainer({
   }
 
   return (
-    <div className="h-25 w-80 flex flex-col justify-center items-center gap-2 ml-auto">
+    <div className="h-25 w-80 flex flex-col justify-center items-center gap-3 ml-auto">
       {children}
     </div>
   );
@@ -76,19 +79,19 @@ interface JobProgressBarProps {
 }
 
 function getStepColor(step?: BenchmarkJobStep): string {
-  if (!step) return "bg-gray-200"; // light gray for undefined steps
+  if (!step) return "bg-gray-300"; // light gray for undefined steps
 
   const { status, conclusion } = step;
 
   if (status === "completed") {
     if (conclusion === "success") return "bg-green-500";
     else if (conclusion === "skipped") return "bg-green-300";
-    else if (conclusion === "cancelled") return "bg-gray-600";
+    else if (conclusion === "cancelled") return "bg-gray-500";
     else return "bg-red-500";
   } else if (status === "in_progress") {
-    return "bg-yellow-400";
+    return "bg-blue-500";
   } else {
-    return "bg-gray-600"; // dark gray
+    return "bg-gray-400"; // dark gray
   }
 }
 
@@ -99,16 +102,16 @@ export function JobProgressBar({ numSteps, steps }: JobProgressBarProps) {
 
     // Rounded corners for first and last blocks
     const roundedClass =
-      i === 0 ? "rounded-l-full" : i === numSteps - 1 ? "rounded-r-full" : "";
+      i === 0 ? "rounded-l-lg" : i === numSteps - 1 ? "rounded-r-lg" : "";
 
-    // Dotted border between blocks except the last one
-    const borderClass =
-      i < numSteps - 1 ? "border-r-2 border-solid border-gray-300" : "";
+    // Border between blocks except the last one
+    const borderClass = i < numSteps - 1 ? "border-r border-white/20" : "";
 
     return (
       <div
         key={i}
-        className={`flex-1 h-2 ${colorClass} ${roundedClass} ${borderClass}`}
+        className={`flex-1 h-3 ${colorClass} ${roundedClass} ${borderClass} transition-colors duration-300`}
+        title={step ? `${step.name}: ${step.status}` : "Pending"}
       />
     );
   });
@@ -120,22 +123,39 @@ export function JobProgressBar({ numSteps, steps }: JobProgressBarProps) {
   };
 
   let title = "Waiting for Job";
+  let statusIcon = <Clock className="w-4 h-4 text-gray-500" />;
+
   if (steps.length > 0) {
     let activeStep: BenchmarkJobStep = steps[0];
     for (activeStep of steps)
       if (!activeStep.started_at || !activeStep.completed_at) break;
 
     title = `${toTitleCase(activeStep.name)}: `;
-    if (activeStep.status === "completed")
+    if (activeStep.status === "completed") {
       title += formatStatus(activeStep.conclusion);
-    else title += formatStatus(activeStep.status);
+      if (activeStep.conclusion === "success") {
+        statusIcon = <CheckCircle className="w-4 h-4 text-green-600" />;
+      } else if (activeStep.conclusion === "cancelled") {
+        statusIcon = <XCircle className="w-4 h-4 text-gray-600" />;
+      } else {
+        statusIcon = <AlertCircle className="w-4 h-4 text-red-600" />;
+      }
+    } else {
+      title += formatStatus(activeStep.status);
+      statusIcon = <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />;
+    }
   }
 
   return (
-    <>
-      {title}
-      <div className="flex w-full overflow-hidden">{blocks}</div>
-    </>
+    <div className="w-full space-y-3">
+      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+        {statusIcon}
+        <span>{title}</span>
+      </div>
+      <div className="flex w-full overflow-hidden rounded-lg shadow-inner bg-gray-200">
+        {blocks}
+      </div>
+    </div>
   );
 }
 
@@ -184,13 +204,23 @@ export default function RunStatus({ run, pr }: RunStatusProps) {
       <RunStatusContainer run={run}>
         <button
           disabled={workflowWaiting}
-          className="bg-green-300 text-black px-4 py-1 rounded shadow hover:not-[disabled]:bg-green-400 disabled:bg-gray-300 transition-all"
+          className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2.5 rounded-lg shadow-sm font-medium transition-all duration-200 flex items-center gap-2 disabled:cursor-not-allowed"
           onClick={(e) => {
             dispatchWorkflow();
             e.stopPropagation();
           }}
         >
-          {workflowWaiting ? "Run Requested" : "Trigger CI Run"}
+          {workflowWaiting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Run Requested
+            </>
+          ) : (
+            <>
+              <Play className="w-4 h-4" />
+              Trigger CI Run
+            </>
+          )}
         </button>
       </RunStatusContainer>
     );
@@ -199,8 +229,13 @@ export default function RunStatus({ run, pr }: RunStatusProps) {
   if (["queued", "requested", "pending", "waiting"].includes(run.status))
     return (
       <RunStatusContainer run={run} fill actions={{ Cancel: cancelWorkflow }}>
-        Run {toTitleCase(run.status)}
-        <BarLoader />
+        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <Clock className="w-4 h-4 text-blue-600" />
+          Run {toTitleCase(run.status)}
+        </div>
+        <div className="w-16">
+          <BarLoader color="#3B82F6" width="100%" height={4} />
+        </div>
       </RunStatusContainer>
     );
   else {

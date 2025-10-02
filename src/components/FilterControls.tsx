@@ -27,17 +27,25 @@ export function SingleSelectFilter({
   onInput,
 }: SingleSelectProps) {
   return (
-    <div className="select-none flex gap-2 items-center">
-      <span className="font-semibold">{title}:</span>
-      {options.map((option) => (
-        <button
-          key={option}
-          className={`px-3 py-1 rounded ${option === selectedOption ? "bg-blue-600 text-white" : "bg-white border-gray-300"}`}
-          onClick={() => onInput(option)}
-        >
-          {option}
-        </button>
-      ))}
+    <div className="select-none flex gap-3 items-center">
+      <span className="font-medium text-gray-700 text-sm min-w-fit">
+        {title}:
+      </span>
+      <div className="flex gap-2 flex-wrap">
+        {options.map((option) => (
+          <button
+            key={option}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border ${
+              option === selectedOption
+                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                : "bg-white text-gray-700 border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+            }`}
+            onClick={() => onInput(option)}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -114,14 +122,16 @@ export function MultiSelectFilter({
   if (options.length > 10) {
     return (
       <div
-        className="select-none flex gap-2 items-center relative"
+        className="select-none flex gap-3 items-center relative"
         ref={dropdownRef}
       >
-        <span className="font-semibold">{title}:</span>
+        <span className="font-medium text-gray-700 text-sm min-w-fit">
+          {title}:
+        </span>
         <div className="relative">
           <button
             ref={buttonRef}
-            className="px-4 py-2 border border-gray-300 rounded bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all duration-200"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
             {allSelected
@@ -134,13 +144,13 @@ export function MultiSelectFilter({
 
           {isDropdownOpen && (
             <div
-              className={`absolute z-10 mt-1 w-80 max-h-90 overflow-auto bg-white border border-gray-300 rounded shadow-lg ${
+              className={`absolute z-10 mt-1 w-80 max-h-90 overflow-auto bg-white border border-gray-300 rounded-lg shadow-lg ${
                 dropdownPosition === "right" ? "right-0" : "left-0"
               }`}
             >
-              <div className="p-2 border-b">
+              <div className="p-3 border-b border-gray-200">
                 <button
-                  className="text-sm text-blue-600 hover:text-blue-800 mr-4"
+                  className="text-sm text-blue-600 hover:text-blue-800 mr-4 font-medium"
                   onClick={(e) => {
                     e.preventDefault();
                     onInput(options);
@@ -149,7 +159,7 @@ export function MultiSelectFilter({
                   Select All
                 </button>
                 <button
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
                   onClick={(e) => {
                     e.preventDefault();
                     onInput([]);
@@ -161,17 +171,18 @@ export function MultiSelectFilter({
               {options.map((option) => (
                 <label
                   key={option}
-                  className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                  className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer transition-colors"
                   onClick={(e) => handleOptionClick(option, e)}
                 >
                   <input
                     type="checkbox"
                     checked={selectedOptions.includes(option)}
                     onChange={() => {}} // Handled by label onClick
-                    className="mr-2"
+                    className="mr-3 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                     onClick={(e) => e.stopPropagation()}
                   />
                   <span
+                    className="text-sm"
                     style={{
                       color:
                         selectedOptions.includes(option) && distinctColors
@@ -192,25 +203,41 @@ export function MultiSelectFilter({
 
   // Original row layout for 10 or fewer options
   return (
-    <div className="select-none flex gap-2 items-center">
-      <span className="font-semibold">{title}:</span>
-      {options.map((option) => (
-        <button
-          key={option}
-          className="px-2 py-1 rounded outline-0"
-          style={{
-            backgroundColor:
-              selectedOptions.includes(option) && distinctColors
-                ? getBackendColor(option).lighten(0.4).string()
-                : selectedOptions.includes(option)
-                  ? "#bfdbfe" // blue-200
-                  : "#ffffff",
-          }}
-          onClick={(e) => handleOptionClick(option, e)}
-        >
-          {option}
-        </button>
-      ))}
+    <div className="select-none flex gap-3 items-center">
+      <span className="font-medium text-gray-700 text-sm min-w-fit">
+        {title}:
+      </span>
+      <div className="flex gap-2 flex-wrap">
+        {options.map((option) => (
+          <button
+            key={option}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border outline-0"
+            style={{
+              backgroundColor:
+                selectedOptions.includes(option) && distinctColors
+                  ? getBackendColor(option).lighten(0.4).string()
+                  : selectedOptions.includes(option)
+                    ? "#3b82f6" // blue-600
+                    : "#ffffff",
+              borderColor:
+                selectedOptions.includes(option) && distinctColors
+                  ? getBackendColor(option).string()
+                  : selectedOptions.includes(option)
+                    ? "#3b82f6" // blue-600
+                    : "#d1d5db", // gray-300
+              color:
+                selectedOptions.includes(option) && distinctColors
+                  ? getBackendColor(option).darken(0.3).string()
+                  : selectedOptions.includes(option)
+                    ? "#ffffff"
+                    : "#374151", // gray-700
+            }}
+            onClick={(e) => handleOptionClick(option, e)}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -226,12 +253,18 @@ interface FilterControlsProps {
 
 export default function FilterControls({ filters }: FilterControlsProps) {
   return (
-    <div className="flex w-[100%] rounded-md shadow-md bg-gray-100 p-3 flex-wrap mb-6 gap-6 items-center justify-center">
-      {filters.map((filter) =>
+    <div className="flex flex-wrap gap-6 items-start">
+      {filters.map((filter, index) =>
         filter.type === "single" ? (
-          <SingleSelectFilter {...(filter.props as SingleSelectProps)} />
+          <SingleSelectFilter
+            key={index}
+            {...(filter.props as SingleSelectProps)}
+          />
         ) : (
-          <MultiSelectFilter {...(filter.props as MultiSelectProps)} />
+          <MultiSelectFilter
+            key={index}
+            {...(filter.props as MultiSelectProps)}
+          />
         )
       )}
     </div>
