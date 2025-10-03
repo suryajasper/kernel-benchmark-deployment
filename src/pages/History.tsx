@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
-import type { RepoPullRequest, BenchmarkRun } from "../types";
+import {
+  type RepoPullRequest,
+  type BenchmarkRun,
+  type ChangeStats,
+} from "../types";
 import PageContainer from "../components/PageContainer";
 import {
+  fetchChangeStats,
   fetchModifications,
   fetchPerformanceRuns,
   fetchRuns,
@@ -19,6 +24,9 @@ export default function History() {
   >(undefined);
   const [runs, setRuns] = useState<Record<string, BenchmarkRun>>({});
   const [performances, setPerformances] = useState<BenchmarkRun[]>([]);
+  const [changeStats, setChangeStats] = useState<Record<string, ChangeStats>>(
+    {}
+  );
   const [rebaseWaiting, setRebaseWaiting] = useState<boolean>(false);
 
   useEffect(() => {
@@ -54,18 +62,25 @@ export default function History() {
       fetchPerformanceRuns().then(setPerformances);
     };
 
+    const updateChangeStats = () => {
+      fetchChangeStats().then(setChangeStats);
+    };
+
     updateRuns();
     updateModifications();
     updatePerfs();
+    updateChangeStats();
 
     const modInterval = setInterval(updateModifications, 30 * 1000);
     const runInterval = setInterval(updateRuns, 10 * 1000);
     const perfInterval = setInterval(updatePerfs, 60 * 1000);
+    const changeStatsInterval = setInterval(updateChangeStats, 20 * 1000);
 
     return () => {
       clearInterval(modInterval);
       clearInterval(runInterval);
       clearInterval(perfInterval);
+      clearInterval(changeStatsInterval);
     };
   }, []);
 
@@ -128,6 +143,7 @@ export default function History() {
                         <ModificationView
                           pr={item as RepoPullRequest}
                           runs={runs}
+                          changeStats={changeStats}
                         />
                       </div>
                     );

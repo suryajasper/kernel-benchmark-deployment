@@ -1,7 +1,12 @@
-import type { BenchmarkJobStep, BenchmarkRun, RepoPullRequest } from "../types";
+import type {
+  BenchmarkJobStep,
+  BenchmarkRun,
+  ChangeStats,
+  RepoPullRequest,
+} from "../types";
 import { toTitleCase } from "../utils/utils";
 import { BarLoader } from "react-spinners";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cancelWorkflow, triggerWorkflow } from "../utils/github";
 import {
   Clock,
@@ -11,6 +16,7 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
+import { ChangeStatView } from "./ChangeStat";
 
 interface RunStatusContainerProps {
   children: React.ReactNode;
@@ -159,31 +165,39 @@ export function JobProgressBar({ numSteps, steps }: JobProgressBarProps) {
   );
 }
 
-interface ChangeStatusProps {
-  run: BenchmarkRun;
+export default function RunStatus({ run }: { run: BenchmarkRun }) {
+  if (["queued", "requested", "pending", "waiting"].includes(run.status))
+    return (
+      <RunStatusContainer run={run} fill actions={{ Cancel: cancelWorkflow }}>
+        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <Clock className="w-4 h-4 text-blue-600" />
+          Run {toTitleCase(run.status)}
+        </div>
+        <div className="w-16">
+          <BarLoader color="#3B82F6" width="100%" height={4} />
+        </div>
+      </RunStatusContainer>
+    );
+  else {
+    return (
+      <RunStatusContainer run={run} fill actions={{ Cancel: cancelWorkflow }}>
+        <JobProgressBar numSteps={run.numSteps} steps={run.steps} />
+      </RunStatusContainer>
+    );
+  }
 }
 
-export function ChangeStatView({ run }: ChangeStatusProps) {
-  return (
-    <RunStatusContainer run={run}>
-      {/* {Object.entries(run.changeStats).map(([kernelType, change]) => (
-        <ChangeStatBar
-          key={kernelType}
-          kernelType={kernelType}
-          change={change}
-        />
-      ))} */}
-      <div>hi</div>
-    </RunStatusContainer>
-  );
-}
-
-interface RunStatusProps {
+interface PullRequestRunStatusProps {
   run?: BenchmarkRun;
+  changeStats?: ChangeStats;
   pr: RepoPullRequest;
 }
 
-export default function RunStatus({ run, pr }: RunStatusProps) {
+export function PullRequestRunStatus({
+  run,
+  pr,
+  changeStats,
+}: PullRequestRunStatusProps) {
   const [workflowWaiting, setWorkflowWaiting] = useState<boolean>(false);
 
   const dispatchWorkflow = async () => {
@@ -195,8 +209,14 @@ export default function RunStatus({ run, pr }: RunStatusProps) {
     }
   };
 
-  // if (run && Object.keys(run.changeStats).length > 0)
-  //   return <ChangeStatView run={run} />;
+  useEffect(() => {
+    if (!run) return;
+
+    if (run.completed) {
+    }
+  }, [run]);
+
+  if (changeStats) return <ChangeStatView changeStats={changeStats} />;
 
   if (!run || (run.status === "completed" && run.conclusion !== "success")) {
     if (pr.status === "closed") return <div className="ml-auto" />;
@@ -226,23 +246,5 @@ export default function RunStatus({ run, pr }: RunStatusProps) {
     );
   }
 
-  if (["queued", "requested", "pending", "waiting"].includes(run.status))
-    return (
-      <RunStatusContainer run={run} fill actions={{ Cancel: cancelWorkflow }}>
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <Clock className="w-4 h-4 text-blue-600" />
-          Run {toTitleCase(run.status)}
-        </div>
-        <div className="w-16">
-          <BarLoader color="#3B82F6" width="100%" height={4} />
-        </div>
-      </RunStatusContainer>
-    );
-  else {
-    return (
-      <RunStatusContainer run={run} fill actions={{ Cancel: cancelWorkflow }}>
-        <JobProgressBar numSteps={run.numSteps} steps={run.steps} />
-      </RunStatusContainer>
-    );
-  }
+  return <RunStatus run={run} />;
 }

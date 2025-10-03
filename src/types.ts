@@ -90,7 +90,20 @@ export interface ChangeAuthor {
   profileUrl: string;
 }
 
-export type ChangeStats = Record<KernelType, number>;
+// export type ChangeStats = Record<KernelType, number>;
+
+export interface EntryAverageChange {
+  tflops: number;
+  runtime: number;
+}
+
+export interface ChangeStats {
+  _id: string;
+  runId: string;
+  machine: string;
+  old?: Record<string, Record<string, Record<string, EntryAverageChange>>>;
+  new?: Record<string, Record<string, Record<string, EntryAverageChange>>>;
+}
 
 // export interface RepoCommit {
 //   _id: string;

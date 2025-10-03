@@ -1,6 +1,12 @@
 // KernelListItem.tsx
 import { useState } from "react";
-import { ChevronRight, Clock, Settings, CheckCircle2 } from "lucide-react";
+import {
+  ChevronRight,
+  Clock,
+  Settings,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
 import type { KernelConfig, TuningConfig } from "../../types";
 import { getTimeStringRelative, toTitleCase } from "../../utils/utils";
 import { getBackendColor } from "../../utils/color";
@@ -109,6 +115,7 @@ interface KernelListItemProps {
   kernel: KernelConfig;
   index: number;
   tuningResults?: TuningConfig[];
+  inProgress?: boolean;
   isActive?: boolean;
   onToggle?: (id: string, state: boolean) => void;
   onMouseDown?: (index: number) => void;
@@ -119,6 +126,7 @@ export function KernelListItem({
   kernel,
   index,
   tuningResults,
+  inProgress = false,
   isActive = false,
   onToggle,
   onMouseDown,
@@ -216,8 +224,19 @@ export function KernelListItem({
         </div>
 
         <div className="flex items-center gap-2 text-sm text-gray-600 flex-shrink-0">
-          <Clock className="w-4 h-4" />
-          <span>Last tuned: {lastTuned}</span>
+          {inProgress ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+              <span className="text-blue-600 font-medium">
+                Tuning in progress...
+              </span>
+            </>
+          ) : (
+            <>
+              <Clock className="w-4 h-4" />
+              <span>Last tuned: {lastTuned}</span>
+            </>
+          )}
           {hasTuningConfigs && (
             <div className="flex items-center gap-1 ml-2">
               <CheckCircle2 className="w-4 h-4 text-green-500" />

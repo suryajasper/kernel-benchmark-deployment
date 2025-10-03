@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import type { RepoPullRequest, BenchmarkRun } from "../types";
+import type { RepoPullRequest, BenchmarkRun, ChangeStats } from "../types";
 import {
   GitPullRequest,
   GitMerge,
@@ -12,14 +12,19 @@ import {
   Clock,
 } from "lucide-react";
 import { getTimeStringRelative } from "../utils/utils";
-import RunStatus, { ChangeStatView } from "../components/RunStatus";
+import { PullRequestRunStatus } from "../components/RunStatus";
 
 interface ModificationViewProps {
   pr: RepoPullRequest;
   runs: Record<string, BenchmarkRun>;
+  changeStats: Record<string, ChangeStats>;
 }
 
-export default function ModificationView({ pr, runs }: ModificationViewProps) {
+export default function ModificationView({
+  pr,
+  runs,
+  changeStats,
+}: ModificationViewProps) {
   const [isExpanded, setExpanded] = useState<boolean>(false);
   const [isHovering, setHover] = useState<boolean>(false);
 
@@ -93,7 +98,11 @@ export default function ModificationView({ pr, runs }: ModificationViewProps) {
 
           {/* Status */}
           <div className="flex-shrink-0">
-            <RunStatus run={run} pr={pr} />
+            <PullRequestRunStatus
+              run={run}
+              pr={pr}
+              changeStats={run && changeStats[run._id]}
+            />
           </div>
         </div>
       </div>
@@ -209,9 +218,9 @@ export function PerformanceView({ perf }: PerformanceViewProps) {
           </div>
 
           {/* Status */}
-          <div className="flex-shrink-0">
+          {/* <div className="flex-shrink-0">
             <ChangeStatView run={perf} />
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

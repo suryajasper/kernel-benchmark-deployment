@@ -7,6 +7,7 @@ import { KernelListItem } from "./KernelListItem";
 interface KernelListProps {
   kernels: KernelConfig[];
   tuningResults: TuningResults;
+  inProgress?: Set<string>;
   toggleKernels?: (ids: string[], state: boolean) => void;
   activeKernels?: Set<string>;
 }
@@ -14,6 +15,7 @@ interface KernelListProps {
 export default function KernelList({
   kernels,
   tuningResults,
+  inProgress,
   toggleKernels,
   activeKernels,
 }: KernelListProps) {
@@ -96,6 +98,7 @@ export default function KernelList({
             kernel={kernel}
             index={index}
             tuningResults={tuningResults[kernel.name]}
+            inProgress={inProgress && inProgress.has(kernel._id)}
             isActive={activeKernels?.has(kernel._id)}
             onToggle={toggleKernels ? handleToggle : undefined}
             onMouseDown={handleMouseDown}

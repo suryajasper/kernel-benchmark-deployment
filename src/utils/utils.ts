@@ -1,4 +1,4 @@
-import type { Kernel, KernelType } from "../types";
+import type { Kernel, KernelConfig, KernelType } from "../types";
 
 export function toTitleCase(str: string): string {
   return str.replace(

@@ -5,6 +5,8 @@ import type {
   BackendKernelConfig,
   TuningResults,
   KernelTypeDefinition,
+  TuningConfig,
+  ChangeStats,
 } from "../types";
 
 export async function fetchModifications() {
@@ -85,8 +87,59 @@ export async function fetchTuningResults() {
     throw new Error(`HTTP error! Status: ${response.status}`);
   }
 
-  const tuningConfigs: TuningResults = await response.json();
-  return tuningConfigs;
+  const tuningConfigs: TuningConfig[] = await response.json();
+  const tuningResults: TuningResults = {};
+
+  for (let config of tuningConfigs) {
+    let name = config.kernelName;
+    config.timestamp = new Date(config.timestamp);
+    if (config.result["kernel_spec"]) {
+      const kernelSpec = config.result["kernel_spec"] as KernelConfig;
+      name = kernelSpec.name;
+    }
+    if (!tuningResults[name]) tuningResults[name] = [config];
+    else tuningResults[name].push(config);
+  }
+
+  for (let kernelName of Object.keys(tuningResults)) {
+    tuningResults[kernelName].sort(
+      (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+    );
+  }
+
+  console.log("Tuning Results", tuningResults);
+
+  return tuningResults;
+}
+
+export async function fetchInProgressTuningRuns() {
+  const response = await fetch(
+    `${import.meta.env.VITE_BACKEND_SERVER_URL}/tune/runs`
+  );
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  const responseData: { runs: BenchmarkRun[]; kernels: KernelConfig[] } =
+    await response.json();
+  return responseData;
+}
+
+export async function fetchChangeStats() {
+  const response = await fetch(
+    `${import.meta.env.VITE_BACKEND_SERVER_URL}/change_stats`
+  );
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  const changeStatList: ChangeStats[] = await response.json();
+  const changeStatByRun: Record<string, ChangeStats> = {};
+  for (let changeStat of changeStatList) {
+    changeStatByRun[changeStat.runId] = changeStat;
+  }
+
+  return changeStatByRun;
 }
 
 export async function rebase() {

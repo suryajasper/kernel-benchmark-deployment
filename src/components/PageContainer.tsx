@@ -24,27 +24,31 @@ export default function PageContainer({
   const navigate = useNavigate();
   const requireAuth = authPages.includes(activePage);
 
-  useEffect(() => {
-    if (requireAuth && !isAuthenticated) {
-      navigate("/dashboard");
-    }
-  }, [requireAuth, isAuthenticated, navigate]);
+  // useEffect(() => {
+  //   if (requireAuth && !isAuthenticated) {
+  //     navigate("/dashboard");
+  //   }
+  // }, [requireAuth, isAuthenticated, navigate]);
 
   return (
     <>
       <Navbar activePage={activePage} />
-      <div className="px-12 pt-24 pb-6">
-        {isLoading ? (
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
-              <p className="text-gray-600 text-lg font-medium">Loading...</p>
+      {!requireAuth || isAuthenticated ? (
+        <div className="px-12 pt-24 pb-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center min-h-[60vh]">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+                <p className="text-gray-600 text-lg font-medium">Loading...</p>
+              </div>
             </div>
-          </div>
-        ) : (
-          children
-        )}
-      </div>
+          ) : (
+            children
+          )}
+        </div>
+      ) : (
+        "Waiting"
+      )}
     </>
   );
 }
