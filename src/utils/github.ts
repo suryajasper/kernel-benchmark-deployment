@@ -2,11 +2,11 @@ import type {
   RepoPullRequest,
   BenchmarkRun,
   KernelConfig,
-  BackendKernelConfig,
   TuningResults,
   KernelTypeDefinition,
   TuningConfig,
   ChangeStats,
+  BenchmarkRuntimeConfig,
 } from "../types";
 
 export async function fetchModifications() {
@@ -159,7 +159,10 @@ export async function rebase() {
   return { modifications, performances };
 }
 
-export async function triggerWorkflow(pullRequest: RepoPullRequest) {
+export async function triggerBenchWorkflow(
+  pullRequest: RepoPullRequest,
+  config: BenchmarkRuntimeConfig
+) {
   const response = await fetch(
     `${import.meta.env.VITE_BACKEND_SERVER_URL}/workflow/trigger`,
     {
@@ -167,7 +170,10 @@ export async function triggerWorkflow(pullRequest: RepoPullRequest) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(pullRequest),
+      body: JSON.stringify({
+        pr: pullRequest,
+        config,
+      }),
     }
   );
   if (!response.ok) {
@@ -309,8 +315,8 @@ export async function deleteKernelType(kernelTypeId: string): Promise<void> {
 // Kernel Management Functions
 
 export async function addKernels(
-  kernelConfigs: Omit<BackendKernelConfig, "_id">[]
-): Promise<BackendKernelConfig[]> {
+  kernelConfigs: Omit<KernelConfig, "_id">[]
+): Promise<KernelConfig[]> {
   try {
     const response = await fetch(
       `${import.meta.env.VITE_BACKEND_SERVER_URL}/kernels`,
@@ -330,9 +336,62 @@ export async function addKernels(
       );
     }
 
-    const createdKernels: BackendKernelConfig[] = await response.json();
+    const createdKernels: KernelConfig[] = await response.json();
     return createdKernels;
   } catch (error) {
     throw new Error(`Failed to add kernels: ${error}`);
+  }
+}
+
+export async function updateKernels(
+  kernelUpdates: Partial<KernelConfig>[]
+): Promise<KernelConfig[]> {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_SERVER_URL}/kernels/batch`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(kernelUpdates),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.error || `HTTP error! Status: ${response.status}`
+      );
+    }
+
+    const updatedKernels: KernelConfig[] = await response.json();
+    return updatedKernels;
+  } catch (error) {
+    throw new Error(`Failed to update kernels: ${error}`);
+  }
+}
+
+export async function deleteKernels(kernelIds: string[]): Promise<void> {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_SERVER_URL}/kernels`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ids: kernelIds }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.error || `HTTP error! Status: ${response.status}`
+      );
+    }
+  } catch (error) {
+    throw new Error(`Failed to delete kernels: ${error}`);
   }
 }

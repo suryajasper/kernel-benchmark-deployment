@@ -3,11 +3,12 @@ import type {
   BenchmarkRun,
   ChangeStats,
   RepoPullRequest,
+  BenchmarkRuntimeConfig,
 } from "../types";
 import { toTitleCase } from "../utils/utils";
 import { BarLoader } from "react-spinners";
 import { useEffect, useState } from "react";
-import { cancelWorkflow, triggerWorkflow } from "../utils/github";
+import { cancelWorkflow, triggerBenchWorkflow } from "../utils/github";
 import {
   Clock,
   Play,
@@ -17,6 +18,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { ChangeStatView } from "./ChangeStat";
+import BenchmarkConfirmationModal from "./Modals/BenchmarkConfirmationModal";
 
 interface RunStatusContainerProps {
   children: React.ReactNode;
@@ -199,11 +201,14 @@ export function PullRequestRunStatus({
   changeStats,
 }: PullRequestRunStatusProps) {
   const [workflowWaiting, setWorkflowWaiting] = useState<boolean>(false);
+  const [showBenchmarkModal, setShowBenchmarkModal] = useState<boolean>(false);
 
-  const dispatchWorkflow = async () => {
+  const dispatchWorkflow = async (config: BenchmarkRuntimeConfig) => {
     try {
       setWorkflowWaiting(true);
-      await triggerWorkflow(pr);
+      // TODO: Update triggerWorkflow to accept benchmark configuration
+      console.log("Benchmark config:", config);
+      await triggerBenchWorkflow(pr, config);
     } finally {
       setWorkflowWaiting(false);
     }
@@ -221,28 +226,37 @@ export function PullRequestRunStatus({
   if (!run || (run.status === "completed" && run.conclusion !== "success")) {
     if (pr.status === "closed") return <div className="ml-auto" />;
     return (
-      <RunStatusContainer run={run}>
-        <button
-          disabled={workflowWaiting}
-          className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2.5 rounded-lg shadow-sm font-medium transition-all duration-200 flex items-center gap-2 disabled:cursor-not-allowed"
-          onClick={(e) => {
-            dispatchWorkflow();
-            e.stopPropagation();
-          }}
-        >
-          {workflowWaiting ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Run Requested
-            </>
-          ) : (
-            <>
-              <Play className="w-4 h-4" />
-              Trigger CI Run
-            </>
-          )}
-        </button>
-      </RunStatusContainer>
+      <>
+        <RunStatusContainer run={run}>
+          <button
+            disabled={workflowWaiting}
+            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2.5 rounded-lg shadow-sm font-medium transition-all duration-200 flex items-center gap-2 disabled:cursor-not-allowed"
+            onClick={(e) => {
+              setShowBenchmarkModal(true);
+              e.stopPropagation();
+            }}
+          >
+            {workflowWaiting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Run Requested
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4" />
+                Trigger CI Run
+              </>
+            )}
+          </button>
+        </RunStatusContainer>
+
+        <BenchmarkConfirmationModal
+          isOpen={showBenchmarkModal}
+          onClose={() => setShowBenchmarkModal(false)}
+          onConfirm={dispatchWorkflow}
+          pullRequest={pr}
+        />
+      </>
     );
   }
 

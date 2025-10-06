@@ -188,11 +188,11 @@ export default function TuningConfirmationModal({
                 </p>
               </div>
             </div>
-            <div className="space-y-3">
+            <div className="flex flex-row gap-3">
               {AVAILABLE_MACHINES.map((machine) => (
                 <label
                   key={machine}
-                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                  className="flex grow items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   <input
                     type="radio"

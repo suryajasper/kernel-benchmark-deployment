@@ -11,16 +11,9 @@ import {
 import Modal from "../Modal/Modal";
 import { ModalHeader, ModalBody, ModalFooter } from "../Modal/ModalComponents";
 import type { KernelTypeDefinition } from "../../types";
-
-interface KernelData {
-  id: string;
-  values: Record<string, string | boolean>;
-  isValid: boolean;
-  errors: Record<string, string>;
-}
+import type { KernelInputData } from "../../utils/kernelTypes";
 
 export interface KernelRuntimeConfig {
-  tag: string;
   workflow: "none" | "e2e" | "all";
   machines: string[];
 }
@@ -30,7 +23,7 @@ interface KernelConfirmationModalProps {
   onClose: () => void;
   onConfirm: (config: KernelRuntimeConfig) => void;
   kernelType: KernelTypeDefinition;
-  kernels: KernelData[];
+  kernels: KernelInputData[];
 }
 
 const AVAILABLE_MACHINES = ["mi300x", "mi325x", "mi350x", "mi355x"];
@@ -44,14 +37,17 @@ export default function KernelConfirmationModal({
 }: KernelConfirmationModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [config, setConfig] = useState<KernelRuntimeConfig>({
-    tag: "",
     workflow: "e2e",
     machines: AVAILABLE_MACHINES, // Default to all machines
   });
 
   const handleConfirm = async () => {
-    if (!config.tag.trim()) {
-      alert("Please enter a tag for the kernels.");
+    // Check if all kernels have tags
+    const kernelsWithoutTags = kernels.filter((kernel) => !kernel.tag.trim());
+    if (kernelsWithoutTags.length > 0) {
+      alert(
+        "All kernels must have tags. Please ensure all kernels have tags specified."
+      );
       return;
     }
 
@@ -62,14 +58,10 @@ export default function KernelConfirmationModal({
 
     setIsSubmitting(true);
     try {
-      await onConfirm({
-        ...config,
-        tag: config.tag.trim(),
-      });
+      await onConfirm(config);
       onClose();
       // Reset config on successful submission
       setConfig({
-        tag: "",
         workflow: "all",
         machines: AVAILABLE_MACHINES,
       });
@@ -82,7 +74,6 @@ export default function KernelConfirmationModal({
     if (!isSubmitting) {
       // Reset config on cancel
       setConfig({
-        tag: "",
         workflow: "all",
         machines: AVAILABLE_MACHINES,
       });
@@ -99,7 +90,8 @@ export default function KernelConfirmationModal({
     }));
   };
 
-  const isFormValid = config.tag.trim() && config.machines.length > 0;
+  const allKernelsHaveTags = kernels.every((kernel) => kernel.tag.trim());
+  const isFormValid = allKernelsHaveTags && config.machines.length > 0;
   const formatValue = (
     value: string | boolean,
     attributeType: string
@@ -133,10 +125,10 @@ export default function KernelConfirmationModal({
         <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
           {/* Configuration Section */}
           <div className="space-y-4">
-            {/* Tag Input */}
+            {/* Kernel Tags Summary */}
             <div
               className={`rounded-xl p-5 shadow-sm transition-colors ${
-                !config.tag.trim()
+                !allKernelsHaveTags
                   ? "bg-red-50 border-2 border-red-300"
                   : "bg-white border border-gray-200"
               }`}
@@ -144,61 +136,62 @@ export default function KernelConfirmationModal({
               <div className="flex items-center gap-3 mb-4">
                 <div
                   className={`flex items-center justify-center w-8 h-8 rounded-lg ${
-                    !config.tag.trim() ? "bg-red-100" : "bg-blue-100"
+                    !allKernelsHaveTags ? "bg-red-100" : "bg-blue-100"
                   }`}
                 >
                   <Tag
                     className={`w-4 h-4 ${
-                      !config.tag.trim() ? "text-red-600" : "text-blue-600"
+                      !allKernelsHaveTags ? "text-red-600" : "text-blue-600"
                     }`}
                   />
                 </div>
                 <div>
                   <h4
                     className={`font-semibold ${
-                      !config.tag.trim() ? "text-red-900" : "text-gray-900"
+                      !allKernelsHaveTags ? "text-red-900" : "text-gray-900"
                     }`}
                   >
-                    Kernel Tag *
+                    Kernel Tags
                   </h4>
                   <p
                     className={`text-sm ${
-                      !config.tag.trim() ? "text-red-700" : "text-gray-600"
+                      !allKernelsHaveTags ? "text-red-700" : "text-gray-600"
                     }`}
                   >
-                    Identifier for grouping kernels
+                    Individual tags assigned to each kernel
                   </p>
                 </div>
               </div>
               <div className="space-y-3">
-                <input
-                  type="text"
-                  value={config.tag}
-                  onChange={(e) =>
-                    setConfig((prev) => ({ ...prev, tag: e.target.value }))
-                  }
-                  className={`w-full px-4 py-3 rounded-lg outline-0 transition-colors ${
-                    !config.tag.trim()
-                      ? "border-2 border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-red-50"
-                      : "border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  }`}
-                  placeholder="e.g., llama, square, perf2025"
-                  required
-                  disabled={isSubmitting}
-                />
-                {!config.tag.trim() && (
-                  <p className="text-sm text-red-600 font-medium">
-                    ⚠ Please enter a tag for the kernels
+                {!allKernelsHaveTags && (
+                  <p className="text-sm text-red-600 font-medium mb-3">
+                    ⚠ All kernels must have tags before proceeding
                   </p>
                 )}
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(
+                    new Set(kernels.map((kernel) => kernel.tag.trim()))
+                  ).map((tag, index) => (
+                    <div
+                      key={index}
+                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium ${
+                        tag
+                          ? "bg-blue-100 text-blue-800 border border-blue-200"
+                          : "bg-red-100 text-red-800 border border-red-200"
+                      }`}
+                    >
+                      <span className="font-mono">{tag || "(no tag)"}</span>
+                    </div>
+                  ))}
+                </div>
                 <p
                   className={`text-sm ${
-                    !config.tag.trim() ? "text-red-700" : "text-gray-600"
+                    !allKernelsHaveTags ? "text-red-700" : "text-gray-600"
                   }`}
                 >
-                  This tag will be applied to all {kernels.length} kernel
-                  {kernels.length !== 1 ? "s" : ""} and can be used to group
-                  them in the dashboard.
+                  {allKernelsHaveTags
+                    ? `${kernels.length} kernel${kernels.length !== 1 ? "s" : ""} ready with individual tags.`
+                    : "Please ensure all kernels have tags specified in the form above."}
                 </p>
               </div>
             </div>
@@ -425,73 +418,100 @@ export default function KernelConfirmationModal({
                 </p>
               </div>
             </div>
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-              {kernels.map((kernel, index) => (
-                <div
-                  key={kernel.id}
-                  className="border border-gray-200 rounded-lg p-4 bg-gray-50"
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex items-center justify-center w-6 h-6 bg-green-100 rounded-full">
-                      <Check className="w-3 h-3 text-green-600" />
+
+            {kernels.length > 50 ? (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg mx-auto mb-3">
+                  <AlertTriangle className="w-6 h-6 text-gray-600" />
+                </div>
+                <h5 className="font-medium text-gray-900 mb-2">
+                  Too many kernels to display
+                </h5>
+                <p className="text-sm text-gray-600">
+                  Detailed kernel review is hidden because there are{" "}
+                  {kernels.length} kernels.
+                  <br />
+                  The kernel configurations will still be validated and added
+                  correctly.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {kernels.map((kernel, index) => (
+                  <div
+                    key={kernel.id}
+                    className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center justify-center w-6 h-6 bg-green-100 rounded-full">
+                        <Check className="w-3 h-3 text-green-600" />
+                      </div>
+                      <h5 className="font-medium text-gray-900">
+                        Kernel {index + 1}
+                      </h5>
+                      <div className="ml-auto flex items-center gap-2">
+                        <Tag className="w-3 h-3 text-blue-600" />
+                        <span className="text-sm font-mono bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                          {kernel.tag || "(no tag)"}
+                        </span>
+                      </div>
                     </div>
-                    <h5 className="font-medium text-gray-900">
-                      Kernel {index + 1}
-                    </h5>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {kernelType.attributes.map((attribute) => {
-                      const value = kernel.values[attribute.name];
-                      const displayValue = formatValue(value, attribute.type);
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {kernelType.attributes.map((attribute) => {
+                        const value = kernel.values[attribute.name];
+                        const displayValue = formatValue(value, attribute.type);
 
-                      return (
-                        <div
-                          key={attribute.name}
-                          className="bg-white p-3 rounded-lg border border-gray-200"
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <span className="text-sm font-medium text-gray-700">
-                                {attribute.name}
-                              </span>
-                              {attribute.required && (
-                                <span className="text-red-500 text-xs ml-1">
-                                  *
+                        return (
+                          <div
+                            key={attribute.name}
+                            className="bg-white p-3 rounded-lg border border-gray-200"
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <span className="text-sm font-medium text-gray-700">
+                                  {attribute.name}
                                 </span>
-                              )}
+                                {attribute.required && (
+                                  <span className="text-red-500 text-xs ml-1">
+                                    *
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-sm text-gray-900 font-mono bg-gray-50 px-2 py-1 rounded">
+                                {displayValue || (
+                                  <em className="text-gray-400">empty</em>
+                                )}
+                              </span>
                             </div>
-                            <span className="text-sm text-gray-900 font-mono bg-gray-50 px-2 py-1 rounded">
-                              {displayValue || (
-                                <em className="text-gray-400">empty</em>
-                              )}
-                            </span>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
-              <div className="flex items-start gap-3">
-                <div className="flex items-center justify-center w-6 h-6 bg-yellow-100 rounded-full">
-                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-yellow-900">
-                    Important Note
-                  </h4>
-                  <p className="text-sm text-yellow-800 mt-1">
-                    Once added, these kernels will be available for benchmarking
-                    and analysis with the selected configuration. Make sure all
-                    values are correct.
-                  </p>
+            {kernels.length <= 50 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex items-center justify-center w-6 h-6 bg-yellow-100 rounded-full">
+                    <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-yellow-900">
+                      Important Note
+                    </h4>
+                    <p className="text-sm text-yellow-800 mt-1">
+                      Once added, these kernels will be available for
+                      benchmarking and analysis with the selected configuration.
+                      Make sure all values are correct.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </ModalBody>

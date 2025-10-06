@@ -11,9 +11,9 @@ import type { ViewMode } from "../components/KernelForm/ViewToggle";
 import { useModal } from "../contexts/useModal";
 import type { KernelTypeDefinition, KernelRuntimeConfig } from "../types";
 import {
-  DEFAULT_KERNEL_TYPES,
   createKernelType,
   validateKernelTypeData,
+  type KernelInputData,
 } from "../utils/kernelTypes";
 import {
   fetchKernelTypes,
@@ -24,18 +24,11 @@ import {
 } from "../utils/github";
 import { AlertTriangle, Loader2 } from "lucide-react";
 
-interface KernelData {
-  id: string;
-  values: Record<string, string | boolean>;
-  isValid: boolean;
-  errors: Record<string, string>;
-}
-
 export default function AddKernels() {
   const [kernelTypes, setKernelTypes] = useState<KernelTypeDefinition[]>([]);
   const [selectedKernelType, setSelectedKernelType] =
     useState<KernelTypeDefinition | null>(null);
-  const [pendingKernels, setPendingKernels] = useState<KernelData[]>([]);
+  const [pendingKernels, setPendingKernels] = useState<KernelInputData[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("user-friendly");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,15 +53,8 @@ export default function AddKernels() {
         const backendKernelTypes = await fetchKernelTypes();
         setKernelTypes(backendKernelTypes);
       } catch (err) {
-        console.warn(
-          "Failed to load kernel types from backend, using defaults:",
-          err
-        );
-        // Fallback to default kernel types if backend fails
-        setKernelTypes(DEFAULT_KERNEL_TYPES);
-        setError(
-          "Failed to load kernel types from backend. Using default types."
-        );
+        console.warn("Failed to load kernel types from backend:", err);
+        setError("Failed to load kernel types from backend.");
       } finally {
         setIsLoading(false);
       }
@@ -221,7 +207,7 @@ export default function AddKernels() {
     }
   };
 
-  const handleKernelSubmit = (kernels: KernelData[]) => {
+  const handleKernelSubmit = (kernels: KernelInputData[]) => {
     setPendingKernels(kernels);
     confirmationModal.open();
   };
@@ -237,7 +223,7 @@ export default function AddKernels() {
       const kernelsToAdd = pendingKernels.map((kernel) => ({
         name: kernel.id,
         kernelType: selectedKernelType.name,
-        tag: config.tag,
+        tag: kernel.tag,
         machines: config.machines,
         workflow: config.workflow,
         problem: kernel.values, // The kernel's attribute values become the problem object
@@ -249,8 +235,14 @@ export default function AddKernels() {
       await addKernels(kernelsToAdd);
 
       // Show success message
+      const uniqueTags = [...new Set(pendingKernels.map((k) => k.tag))];
+      const tagsList =
+        uniqueTags.length === 1
+          ? `"${uniqueTags[0]}"`
+          : `multiple tags: ${uniqueTags.map((t) => `"${t}"`).join(", ")}`;
+
       alert(
-        `Successfully added ${pendingKernels.length} kernel(s) with tag "${config.tag}" for machines [${config.machines.join(", ")}] and workflow "${config.workflow}" to the dashboard!`
+        `Successfully added ${pendingKernels.length} kernel(s) with ${tagsList} for machines [${config.machines.join(", ")}] and workflow "${config.workflow}" to the dashboard!`
       );
 
       // Reset pending kernels and close modal

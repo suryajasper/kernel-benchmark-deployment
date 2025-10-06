@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
-import type { Kernel, KernelType } from "../types";
+import type { Kernel } from "../types";
 import { KERNEL_DIMS } from "../utils/utils";
 
 // Filter state interface
 export interface FilterState {
-  kernelType: KernelType;
+  kernelType: string;
   machine: string;
   backends: string[];
   dtypes: string[];
@@ -14,7 +14,7 @@ export interface FilterState {
 
 // Available options for each filter
 export interface AvailableFilterOptions {
-  kernelTypes: KernelType[];
+  kernelTypes: string[];
   machines: string[];
   backends: string[];
   dtypes: string[];
@@ -33,8 +33,8 @@ export interface FilterDefinition {
 }
 
 // Helper functions to get unique values from filtered kernels
-function getUniqueKernelTypes(kernels: Kernel[]): KernelType[] {
-  return Array.from(new Set(kernels.map((k) => k.kernelType))) as KernelType[];
+function getUniqueKernelTypes(kernels: Kernel[]): string[] {
+  return Array.from(new Set(kernels.map((k) => k.kernelType)));
 }
 
 function getUniqueMachines(kernels: Kernel[], filters: FilterState): string[] {
@@ -218,10 +218,7 @@ export function useKernelFilters(kernels: Kernel[]) {
   // Compute available options based on current filter state
   const availableOptions: AvailableFilterOptions = useMemo(
     () => ({
-      kernelTypes: FILTER_CONFIGS[0].getOptions(
-        kernels,
-        filters
-      ) as KernelType[],
+      kernelTypes: FILTER_CONFIGS[0].getOptions(kernels, filters),
       machines: FILTER_CONFIGS[1].getOptions(kernels, filters),
       backends: FILTER_CONFIGS[2].getOptions(kernels, filters),
       dtypes: FILTER_CONFIGS[3].getOptions(kernels, filters),

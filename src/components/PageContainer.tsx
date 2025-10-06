@@ -1,6 +1,5 @@
 // PageContainer.tsx
-import { useEffect, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { type ReactNode } from "react";
 import type { PageName } from "./Navbar";
 import Navbar from "./Navbar";
 import { Loader2 } from "lucide-react";
@@ -21,7 +20,6 @@ export default function PageContainer({
   isLoading,
 }: PageContainerProps) {
   const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   const requireAuth = authPages.includes(activePage);
 
   // useEffect(() => {

@@ -2,20 +2,16 @@ import { useState, useEffect } from "react";
 import { Plus, X, Check, Copy } from "lucide-react";
 import AttributeInput, { validateAttributeValue } from "./AttributeInput";
 import type { KernelTypeDefinition, KernelTypeAttribute } from "../../types";
-
-interface KernelData {
-  id: string;
-  values: Record<string, string | boolean>;
-  isValid: boolean;
-  errors: Record<string, string>;
-}
+import type { KernelInputData } from "../../utils/kernelTypes";
 
 interface UserFriendlyKernelFormProps {
   kernelType: KernelTypeDefinition;
-  onSubmit: (kernels: KernelData[]) => void;
+  onSubmit: (kernels: KernelInputData[]) => void;
 }
 
-const createEmptyKernel = (kernelType: KernelTypeDefinition): KernelData => {
+const createEmptyKernel = (
+  kernelType: KernelTypeDefinition
+): KernelInputData => {
   const values: Record<string, string | boolean> = {};
 
   // Initialize with default values
@@ -30,17 +26,24 @@ const createEmptyKernel = (kernelType: KernelTypeDefinition): KernelData => {
   return {
     id: `kernel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     values,
+    tag: "",
     isValid: false,
     errors: {},
   };
 };
 
 const validateKernel = (
-  kernel: KernelData,
+  kernel: KernelInputData,
   attributes: KernelTypeAttribute[]
-): KernelData => {
+): KernelInputData => {
   const errors: Record<string, string> = {};
   let isValid = true;
+
+  // Validate tag
+  if (!kernel.tag.trim()) {
+    errors["tag"] = "Tag is required";
+    isValid = false;
+  }
 
   attributes.forEach((attr) => {
     const value = kernel.values[attr.name];
@@ -63,7 +66,7 @@ export default function UserFriendlyKernelForm({
   kernelType,
   onSubmit,
 }: UserFriendlyKernelFormProps) {
-  const [kernels, setKernels] = useState<KernelData[]>([
+  const [kernels, setKernels] = useState<KernelInputData[]>([
     createEmptyKernel(kernelType),
   ]);
 
@@ -113,6 +116,17 @@ export default function UserFriendlyKernelForm({
     });
   };
 
+  const updateKernelTag = (kernelIndex: number, tag: string) => {
+    setKernels((prev) => {
+      const updated = [...prev];
+      updated[kernelIndex] = {
+        ...updated[kernelIndex],
+        tag: tag,
+      };
+      return updated;
+    });
+  };
+
   const addKernel = () => {
     setKernels((prev) => [...prev, createEmptyKernel(kernelType)]);
   };
@@ -125,9 +139,10 @@ export default function UserFriendlyKernelForm({
 
   const duplicateKernel = (index: number) => {
     const kernelToCopy = kernels[index];
-    const newKernel: KernelData = {
+    const newKernel: KernelInputData = {
       id: `kernel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       values: { ...kernelToCopy.values },
+      tag: kernelToCopy.tag,
       isValid: kernelToCopy.isValid,
       errors: { ...kernelToCopy.errors },
     };
@@ -238,6 +253,31 @@ export default function UserFriendlyKernelForm({
 
             {/* Kernel Attributes */}
             <div className="p-4">
+              {/* Tag Input */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Kernel Tag *
+                </label>
+                <input
+                  type="text"
+                  value={kernel.tag}
+                  onChange={(e) => updateKernelTag(kernelIndex, e.target.value)}
+                  placeholder="e.g., llama, square, perf2025"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                    kernel.errors["tag"]
+                      ? "border-red-300 bg-red-50"
+                      : kernel.tag.trim()
+                        ? "border-green-300 bg-green-50"
+                        : "border-gray-300"
+                  }`}
+                />
+                {kernel.errors["tag"] && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {kernel.errors["tag"]}
+                  </p>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {kernelType.attributes.map((attribute) => (
                   <AttributeInput

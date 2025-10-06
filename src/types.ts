@@ -1,6 +1,5 @@
 /* Kernels */
 
-export type KernelType = "gemm" | "attention" | "conv";
 export type WorkflowType = "none" | "e2e" | "all";
 
 // Available machines for kernel execution
@@ -14,7 +13,6 @@ export type MachineType = (typeof AVAILABLE_MACHINES)[number];
 
 // Runtime configuration for kernels
 export interface KernelRuntimeConfig {
-  tag: string;
   workflow: WorkflowType;
   machines: string[];
 }
@@ -23,7 +21,7 @@ export interface Kernel {
   id: string;
   machine: string;
   backend: string;
-  kernelType: KernelType;
+  kernelType: string;
   name: string;
   tag: string;
   dtype: string;
@@ -40,19 +38,8 @@ export interface KernelConfig {
   name: string;
   kernelType: string;
   machines: string[];
-  workflow: string;
-  tag: string;
-  problem: Record<string, any>;
-}
-
-// Backend API types for kernel submission
-export interface BackendKernelConfig {
-  _id: string;
-  name: string;
-  kernelType: string;
-  tag: string;
-  machines: string[];
   workflow: WorkflowType;
+  tag: string;
   problem: Record<string, any>;
 }
 
@@ -104,14 +91,6 @@ export interface ChangeStats {
   old?: Record<string, Record<string, Record<string, EntryAverageChange>>>;
   new?: Record<string, Record<string, Record<string, EntryAverageChange>>>;
 }
-
-// export interface RepoCommit {
-//   _id: string;
-//   title: string;
-//   author: ChangeAuthor;
-//   timestamp: Date;
-//   description?: string;
-// }
 
 export interface RepoPullRequest {
   _id: string;
@@ -194,16 +173,18 @@ export interface TuningConfig {
 
 export type TuningResults = Record<string, TuningConfig[]>;
 
-export interface KernelRuntimeConfig {
-  tag: string;
-  workflow: "none" | "e2e" | "all";
-  machines: string[];
-}
-
 export interface BenchmarkWorkflowProps {
   githubUrl: string;
   repoName: string;
   branchName: string;
   selectedBackends: string[];
   maxKernels?: number;
+}
+
+export interface BenchmarkRuntimeConfig {
+  machine: MachineType;
+  kernelSelection: {
+    type: "all-quick" | "specific-tags";
+    tags?: string[];
+  };
 }

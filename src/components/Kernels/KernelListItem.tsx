@@ -7,7 +7,7 @@ import {
   CheckCircle2,
   Loader2,
 } from "lucide-react";
-import type { KernelConfig, TuningConfig } from "../../types";
+import type { KernelConfig, TuningConfig, WorkflowType } from "../../types";
 import { getTimeStringRelative, toTitleCase } from "../../utils/utils";
 import { getBackendColor } from "../../utils/color";
 import type { ColorInstance } from "color";
@@ -95,8 +95,8 @@ function TuningConfigView({ config }: TuningConfigViewProps) {
           {getTimeStringRelative(config.timestamp)}
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        {Object.entries(config.result)
+      <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+        {Object.entries(config.result.hyperparams)
           .filter(([key]) => !ignoredAttributes.has(key))
           .map(([key, value]) => (
             <div key={key} className="text-sm">
@@ -163,6 +163,12 @@ export function KernelListItem({
     }
   };
 
+  const getWorkflowLabel = (workflow: WorkflowType) => {
+    if (workflow === "all") return "All Benchmarks";
+    if (workflow === "e2e") return "E2E Only";
+    return "Disabled";
+  };
+
   return (
     <div className={getCardClasses()}>
       <div
@@ -207,6 +213,7 @@ export function KernelListItem({
           <div className="flex flex-wrap items-center gap-2 min-w-0">
             <ItemTag label={toTitleCase(kernel.kernelType)} variant="primary" />
             <ItemTag label={kernel.tag} variant="secondary" />
+            <div className="w-2"></div>
 
             {Object.entries(kernel.problem).map(([dimName, dimValue]) => (
               <ItemTag
@@ -216,10 +223,8 @@ export function KernelListItem({
               />
             ))}
 
-            <ItemTag
-              label={`Workflow = ${kernel.workflow}`}
-              colorHash="workflow"
-            />
+            <div className="w-2"></div>
+            <ItemTag label={getWorkflowLabel(kernel.workflow)} />
           </div>
         </div>
 

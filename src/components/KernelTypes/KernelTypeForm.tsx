@@ -1,14 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  Plus,
-  X,
-  Settings,
-  Tag,
-  FileText,
-  Loader2,
-  Type,
-  Hash,
-} from "lucide-react";
+import { Plus, X, Settings, Loader2, Type, Hash } from "lucide-react";
 import Modal from "../Modal/Modal";
 import { ModalHeader, ModalBody, ModalFooter } from "../Modal/ModalComponents";
 import type {
