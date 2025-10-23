@@ -2,7 +2,7 @@ import type { KernelTypeDefinition } from "../types";
 
 export interface KernelInputData {
   id: string;
-  values: Record<string, string | boolean>;
+  values: Record<string, any>;
   tag: string;
   isValid: boolean;
   errors: Record<string, string>;

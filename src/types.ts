@@ -3,13 +3,7 @@
 export type WorkflowType = "none" | "e2e" | "all";
 
 // Available machines for kernel execution
-export const AVAILABLE_MACHINES = [
-  "mi300x",
-  "mi325x",
-  "mi350x",
-  "mi355x",
-] as const;
-export type MachineType = (typeof AVAILABLE_MACHINES)[number];
+export const AVAILABLE_MACHINES = ["mi325", "mi355"];
 
 // Runtime configuration for kernels
 export interface KernelRuntimeConfig {
@@ -182,7 +176,7 @@ export interface BenchmarkWorkflowProps {
 }
 
 export interface BenchmarkRuntimeConfig {
-  machine: MachineType;
+  machine: string;
   kernelSelection: {
     type: "all-quick" | "specific-tags";
     tags?: string[];

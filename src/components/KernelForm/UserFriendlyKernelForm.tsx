@@ -12,7 +12,7 @@ interface UserFriendlyKernelFormProps {
 const createEmptyKernel = (
   kernelType: KernelTypeDefinition
 ): KernelInputData => {
-  const values: Record<string, string | boolean> = {};
+  const values: Record<string, any> = {};
 
   // Initialize with default values
   kernelType.attributes.forEach((attr) => {

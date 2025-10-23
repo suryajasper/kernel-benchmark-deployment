@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Modal from "../Modal/Modal";
 import { ModalHeader, ModalBody, ModalFooter } from "../Modal/ModalComponents";
+import { AVAILABLE_MACHINES } from "../../types";
 
 interface TuningPhaseConfig {
   blockSizesMfma: {
@@ -40,8 +41,6 @@ interface TuningConfirmationModalProps {
   selectedKernelCount: number;
 }
 
-const AVAILABLE_MACHINES = ["mi300x", "mi325x", "mi350x", "mi355x"];
-
 const PARADIGM_DESCRIPTIONS = {
   "grid-search":
     "Uses constraints to define a valid search space and benchmarks candidates evenly spread across the search space. Iteratively converges on a narrower, more optimal solution.",
@@ -57,7 +56,7 @@ export default function TuningConfirmationModal({
 }: TuningConfirmationModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [config, setConfig] = useState<TuningRuntimeConfig>({
-    machine: "mi325x",
+    machine: "mi325",
     phases: {
       blockSizesMfma: {
         enabled: true,
@@ -81,7 +80,7 @@ export default function TuningConfirmationModal({
       onClose();
       // Reset config on successful submission
       setConfig({
-        machine: "mi325x",
+        machine: "mi325",
         phases: {
           blockSizesMfma: {
             enabled: true,
@@ -106,7 +105,7 @@ export default function TuningConfirmationModal({
     if (!isSubmitting) {
       // Reset config on cancel
       setConfig({
-        machine: "mi325x",
+        machine: "mi325",
         phases: {
           blockSizesMfma: {
             enabled: true,

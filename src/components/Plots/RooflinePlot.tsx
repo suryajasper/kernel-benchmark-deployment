@@ -28,6 +28,30 @@ Chart.register(
   zoomPlugin
 );
 
+interface MachineRooflineStats {
+  compute: number;
+  memory: number;
+}
+
+const ROOFLINE_BY_MACHINE: Record<string, MachineRooflineStats> = {
+  MI300X: {
+    compute: 1300,
+    memory: 5.3,
+  },
+  MI325X: {
+    compute: 1300,
+    memory: 5.3,
+  },
+  MI350X: {
+    compute: 2300,
+    memory: 8,
+  },
+  MI355X: {
+    compute: 2300,
+    memory: 8,
+  },
+};
+
 interface RooflinePlotProps {
   kernels: Kernel[];
   selectedKernel?: Kernel;
@@ -94,8 +118,9 @@ export default function RooflinePlot({
     );
     const xMax = Math.max(...kernels.map((k) => k.arithmeticIntensity)) * 2;
 
-    const peakMemoryBandwidth = 5.3;
-    const peakCompute = 1307.4;
+    const machine = kernels[0].machine.toUpperCase();
+    const peakMemoryBandwidth = ROOFLINE_BY_MACHINE[machine].memory;
+    const peakCompute = ROOFLINE_BY_MACHINE[machine].compute;
     const xRoofline = Array.from(
       { length: 100 },
       (_, i) => xMin * Math.pow(xMax / xMin, i / 99)

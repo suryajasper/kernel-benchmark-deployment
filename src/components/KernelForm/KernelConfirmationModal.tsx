@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import Modal from "../Modal/Modal";
 import { ModalHeader, ModalBody, ModalFooter } from "../Modal/ModalComponents";
-import type { KernelTypeDefinition } from "../../types";
+import { AVAILABLE_MACHINES, type KernelTypeDefinition } from "../../types";
 import type { KernelInputData } from "../../utils/kernelTypes";
 
 export interface KernelRuntimeConfig {
@@ -25,8 +25,6 @@ interface KernelConfirmationModalProps {
   kernelType: KernelTypeDefinition;
   kernels: KernelInputData[];
 }
-
-const AVAILABLE_MACHINES = ["mi300x", "mi325x", "mi350x", "mi355x"];
 
 export default function KernelConfirmationModal({
   isOpen,

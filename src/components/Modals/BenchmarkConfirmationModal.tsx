@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import Modal from "../Modal/Modal";
 import { ModalHeader, ModalBody, ModalFooter } from "../Modal/ModalComponents";
 import { fetchKernels } from "../../utils/github";
-import type {
-  BenchmarkRuntimeConfig,
-  KernelConfig,
-  MachineType,
-  RepoPullRequest,
+import {
+  AVAILABLE_MACHINES,
+  type BenchmarkRuntimeConfig,
+  type KernelConfig,
+  type RepoPullRequest,
 } from "../../types";
 import {
   Settings,
@@ -28,13 +28,6 @@ interface BenchmarkConfirmationModalProps {
   pullRequest: RepoPullRequest;
 }
 
-const AVAILABLE_MACHINES: readonly MachineType[] = [
-  "mi300x",
-  "mi325x",
-  "mi350x",
-  "mi355x",
-] as const;
-
 export default function BenchmarkConfirmationModal({
   isOpen,
   onClose,
@@ -46,7 +39,7 @@ export default function BenchmarkConfirmationModal({
   const [kernels, setKernels] = useState<KernelConfig[]>([]);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [config, setConfig] = useState<BenchmarkRuntimeConfig>({
-    machine: "mi325x",
+    machine: "mi325",
     kernelSelection: {
       type: "all-quick",
     },
@@ -84,7 +77,7 @@ export default function BenchmarkConfirmationModal({
       onClose();
       // Reset config on successful submission
       setConfig({
-        machine: "mi325x",
+        machine: "mi325",
         kernelSelection: {
           type: "all-quick",
         },
@@ -98,7 +91,7 @@ export default function BenchmarkConfirmationModal({
     if (!isSubmitting) {
       // Reset config on cancel
       setConfig({
-        machine: "mi325x",
+        machine: "mi325",
         kernelSelection: {
           type: "all-quick",
         },
@@ -195,7 +188,7 @@ export default function BenchmarkConfirmationModal({
                         onChange={(e) =>
                           setConfig((prev) => ({
                             ...prev,
-                            machine: e.target.value as MachineType,
+                            machine: e.target.value,
                           }))
                         }
                         disabled={isSubmitting}
