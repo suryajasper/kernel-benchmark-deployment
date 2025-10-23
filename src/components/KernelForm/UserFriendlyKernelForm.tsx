@@ -101,7 +101,7 @@ export default function UserFriendlyKernelForm({
   const updateKernelValue = (
     kernelIndex: number,
     attributeId: string,
-    value: string | boolean
+    value: string | boolean | number
   ) => {
     setKernels((prev) => {
       const updated = [...prev];

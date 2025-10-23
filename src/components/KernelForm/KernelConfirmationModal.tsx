@@ -91,7 +91,7 @@ export default function KernelConfirmationModal({
   const allKernelsHaveTags = kernels.every((kernel) => kernel.tag.trim());
   const isFormValid = allKernelsHaveTags && config.machines.length > 0;
   const formatValue = (
-    value: string | boolean,
+    value: string | boolean | number,
     attributeType: string
   ): string => {
     if (attributeType === "boolean") {

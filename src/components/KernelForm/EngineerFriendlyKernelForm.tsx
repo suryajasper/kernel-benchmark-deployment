@@ -11,7 +11,7 @@ interface EngineerFriendlyKernelFormProps {
 
 interface ParsedRow {
   rowNumber: number;
-  values: Record<string, string | boolean>;
+  values: Record<string, string | boolean | number>;
   tag: string;
   errors: string[];
 }
@@ -41,14 +41,25 @@ const parseCSVLine = (line: string): string[] => {
 const convertValue = (
   value: string,
   attributeType: string
-): string | boolean => {
-  if (attributeType === "boolean") {
-    const lower = value.toLowerCase().trim();
-    return (
-      lower === "true" || lower === "1" || lower === "yes" || lower === "y"
-    );
+): string | boolean | number => {
+  const trimmed = value.trim();
+
+  switch (attributeType) {
+    case "boolean":
+      const lower = trimmed.toLowerCase();
+      return (
+        lower === "true" || lower === "1" || lower === "yes" || lower === "y"
+      );
+    case "integer":
+      const intValue = parseInt(trimmed);
+      return isNaN(intValue) ? trimmed : intValue;
+    case "float":
+      const floatValue = parseFloat(trimmed);
+      return isNaN(floatValue) ? trimmed : floatValue;
+    case "string":
+    default:
+      return trimmed;
   }
-  return value.trim();
 };
 
 export default function EngineerFriendlyKernelForm({
@@ -140,7 +151,7 @@ export default function EngineerFriendlyKernelForm({
       }
 
       const tag = cells[0].trim();
-      const values: Record<string, string | boolean> = {};
+      const values: Record<string, string | boolean | number> = {};
       const rowErrors: string[] = [];
 
       // Validate tag

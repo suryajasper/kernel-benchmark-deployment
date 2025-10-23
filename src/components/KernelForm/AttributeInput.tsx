@@ -9,14 +9,14 @@ interface ValidationResult {
 
 interface AttributeInputProps {
   attribute: KernelTypeAttribute;
-  value: string | boolean;
-  onChange: (value: string | boolean) => void;
+  value: string | boolean | number;
+  onChange: (value: string | boolean | number) => void;
   error?: string;
 }
 
 // Validation functions for different attribute types
 export const validateAttributeValue = (
-  value: string | boolean,
+  value: string | boolean | number,
   attribute: KernelTypeAttribute
 ): ValidationResult => {
   // Handle required validation
@@ -33,7 +33,8 @@ export const validateAttributeValue = (
 
   switch (attribute.type) {
     case "integer":
-      const intValue = parseInt(value as string);
+      const intValue =
+        typeof value === "number" ? value : parseInt(value as string);
       if (isNaN(intValue)) {
         return { isValid: false, message: "Must be a valid integer" };
       }
@@ -52,7 +53,8 @@ export const validateAttributeValue = (
       return { isValid: true };
 
     case "float":
-      const floatValue = parseFloat(value as string);
+      const floatValue =
+        typeof value === "number" ? value : parseFloat(value as string);
       if (isNaN(floatValue)) {
         return { isValid: false, message: "Must be a valid number" };
       }
@@ -128,8 +130,16 @@ export default function AttributeInput({
           <input
             type="number"
             step="1"
-            value={value as string}
-            onChange={(e) => onChange(e.target.value)}
+            value={value === "" ? "" : (value as number | string)}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === "") {
+                onChange("");
+              } else {
+                const parsed = parseInt(val);
+                onChange(isNaN(parsed) ? val : parsed);
+              }
+            }}
             placeholder={
               attribute.constraints?.min !== undefined &&
               attribute.constraints?.max !== undefined
@@ -145,8 +155,16 @@ export default function AttributeInput({
           <input
             type="number"
             step="any"
-            value={value as string}
-            onChange={(e) => onChange(e.target.value)}
+            value={value === "" ? "" : (value as number | string)}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === "") {
+                onChange("");
+              } else {
+                const parsed = parseFloat(val);
+                onChange(isNaN(parsed) ? val : parsed);
+              }
+            }}
             placeholder={
               attribute.constraints?.min !== undefined &&
               attribute.constraints?.max !== undefined
